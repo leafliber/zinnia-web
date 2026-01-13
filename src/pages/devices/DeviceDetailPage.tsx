@@ -7,7 +7,6 @@ import {
   Space,
   Tabs,
   Typography,
-  Spin,
   Popconfirm,
   message,
   DatePicker,
@@ -16,7 +15,6 @@ import {
 } from 'antd'
 import {
   ArrowLeftOutlined,
-  EditOutlined,
   DeleteOutlined,
   ReloadOutlined,
   KeyOutlined,
@@ -26,7 +24,7 @@ import {
 import { useNavigate, useParams } from 'react-router-dom'
 import dayjs from 'dayjs'
 import { devicesApi, batteryApi } from '@/api'
-import { BatteryChart, StatsCard, LoadingSpinner, showDeleteConfirm } from '@/components'
+import { BatteryChart, StatsCard, LoadingSpinner } from '@/components'
 import {
   DEVICE_STATUS_COLORS,
   DEVICE_STATUS_TEXT,
@@ -36,7 +34,7 @@ import {
 } from '@/utils'
 import type { Device, LatestBattery, BatteryStats, AggregatedBatteryData, AggregationInterval } from '@/types'
 
-const { Title, Text } = Typography
+const { Title } = Typography
 const { RangePicker } = DatePicker
 
 export const DeviceDetailPage: React.FC = () => {

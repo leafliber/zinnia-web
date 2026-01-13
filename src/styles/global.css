@@ -14,6 +14,10 @@ body {
     'Noto Color Emoji';
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  /* 移动端防止文字缩放 */
+  -webkit-text-size-adjust: 100%;
+  /* 安全区域适配 */
+  padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left);
 }
 
 #root {
@@ -38,6 +42,14 @@ body {
 
 ::-webkit-scrollbar-thumb:hover {
   background: #a1a1a1;
+}
+
+/* 移动端隐藏滚动条但保留滚动功能 */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
 }
 
 /* 选中文本样式 */
@@ -125,3 +137,177 @@ code {
     display: none !important;
   }
 }
+
+/* 平板响应式 */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .hide-on-tablet {
+    display: none !important;
+  }
+}
+
+/* ===== 响应式断点变量 ===== */
+:root {
+  --breakpoint-xs: 480px;
+  --breakpoint-sm: 576px;
+  --breakpoint-md: 768px;
+  --breakpoint-lg: 992px;
+  --breakpoint-xl: 1200px;
+  --breakpoint-xxl: 1600px;
+  
+  /* 间距 */
+  --spacing-xs: 8px;
+  --spacing-sm: 12px;
+  --spacing-md: 16px;
+  --spacing-lg: 24px;
+  --spacing-xl: 32px;
+}
+
+/* ===== 移动端优化 ===== */
+@media (max-width: 768px) {
+  /* 减小内边距 */
+  .ant-card {
+    border-radius: 8px;
+  }
+  
+  .ant-card-body {
+    padding: 12px !important;
+  }
+  
+  /* 表格响应式 */
+  .ant-table-wrapper {
+    overflow-x: auto;
+  }
+  
+  .ant-table {
+    min-width: 600px;
+  }
+  
+  /* 表单响应式 */
+  .ant-form-item-label {
+    padding-bottom: 4px !important;
+  }
+  
+  /* Modal 适配 */
+  .ant-modal {
+    max-width: calc(100vw - 32px) !important;
+    margin: 16px !important;
+  }
+  
+  .ant-modal-content {
+    padding: 16px !important;
+  }
+  
+  /* 按钮组适配 */
+  .ant-space-horizontal {
+    flex-wrap: wrap;
+  }
+  
+  /* 统计卡片适配 */
+  .ant-statistic-title {
+    font-size: 12px !important;
+  }
+  
+  .ant-statistic-content-value {
+    font-size: 20px !important;
+  }
+}
+
+/* ===== 平板端优化 ===== */
+@media (min-width: 769px) and (max-width: 1024px) {
+  .ant-card-body {
+    padding: 16px !important;
+  }
+  
+  .ant-statistic-content-value {
+    font-size: 24px !important;
+  }
+}
+
+/* ===== 大屏优化 ===== */
+@media (min-width: 1600px) {
+  .ant-layout-content {
+    max-width: 1400px;
+    margin: 0 auto;
+  }
+}
+
+/* ===== 触摸设备优化 ===== */
+@media (hover: none) and (pointer: coarse) {
+  /* 增大可点击区域 */
+  .ant-btn {
+    min-height: 44px;
+    padding: 8px 16px;
+  }
+  
+  .ant-btn-sm {
+    min-height: 36px;
+  }
+  
+  .ant-menu-item {
+    min-height: 48px;
+    line-height: 48px;
+  }
+  
+  .ant-table-row {
+    min-height: 52px;
+  }
+  
+  /* 移除 hover 效果，改用 active */
+  .ant-card:hover {
+    box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.03), 0 1px 6px -1px rgba(0, 0, 0, 0.02),
+      0 2px 4px 0 rgba(0, 0, 0, 0.02);
+  }
+  
+  .ant-card:active {
+    box-shadow: 0 1px 2px -2px rgba(0, 0, 0, 0.16), 0 3px 6px 0 rgba(0, 0, 0, 0.12),
+      0 5px 12px 4px rgba(0, 0, 0, 0.09);
+  }
+}
+
+/* ===== PWA 安装提示样式 ===== */
+.pwa-install-prompt {
+  position: fixed;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  z-index: 1000;
+  background: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  max-width: calc(100vw - 40px);
+}
+
+@media (max-width: 480px) {
+  .pwa-install-prompt {
+    flex-direction: column;
+    text-align: center;
+    bottom: 16px;
+  }
+}
+
+/* ===== 横屏模式提示 ===== */
+@media (max-height: 480px) and (orientation: landscape) {
+  .landscape-warning {
+    display: block;
+  }
+}
+
+/* ===== 打印样式 ===== */
+@media print {
+  .ant-layout-sider,
+  .ant-layout-header,
+  .ant-btn,
+  .no-print {
+    display: none !important;
+  }
+  
+  .ant-layout-content {
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+}
+

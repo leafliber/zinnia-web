@@ -51,7 +51,6 @@ export const useAuthStore = create<AuthState>()(
             email,
             username,
             password,
-            confirm_password: password,
           })
           set({ isLoading: false })
         } catch (error) {

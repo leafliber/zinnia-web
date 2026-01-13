@@ -1,0 +1,13 @@
+此目录用于存放 PWA 图标文件。
+
+需要的图标尺寸：
+- icon-72x72.png
+- icon-96x96.png
+- icon-128x128.png
+- icon-144x144.png
+- icon-152x152.png
+- icon-192x192.png
+- icon-384x384.png
+- icon-512x512.png
+
+建议使用 https://realfavicongenerator.net/ 或类似工具从 favicon.svg 生成所有尺寸的图标。

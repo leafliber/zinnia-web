@@ -99,6 +99,41 @@ apiClient.interceptors.response.use(
   async (error: AxiosError<ApiResponse<null>>) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean }
 
+    // 提取错误信息
+    const extractErrorMessage = (): string => {
+      if (error.response?.data) {
+        const data = error.response.data as { message?: string; error?: { message?: string; code?: string } }
+        // 优先使用 error.message
+        if (data.error?.message) {
+          return data.error.message
+        }
+        // 其次使用顶层 message
+        if (data.message) {
+          return data.message
+        }
+      }
+      // 默认错误信息
+      if (error.response?.status === 400) {
+        return '请求参数错误'
+      }
+      if (error.response?.status === 401) {
+        return '认证失败'
+      }
+      if (error.response?.status === 403) {
+        return '权限不足'
+      }
+      if (error.response?.status === 404) {
+        return '资源不存在'
+      }
+      if (error.response?.status === 429) {
+        return '请求过于频繁，请稍后重试'
+      }
+      if (error.response?.status && error.response.status >= 500) {
+        return '服务器错误，请稍后重试'
+      }
+      return error.message || '网络请求失败'
+    }
+
     // 如果是 401 错误且不是刷新 token 的请求
     if (
       error.response?.status === 401 &&
@@ -144,7 +179,11 @@ apiClient.interceptors.response.use(
       }
     }
 
-    return Promise.reject(error)
+    // 对于其他错误，返回包含具体信息的 Error
+    const errorMessage = extractErrorMessage()
+    const enhancedError = new Error(errorMessage)
+    ;(enhancedError as Error & { response?: typeof error.response }).response = error.response
+    return Promise.reject(enhancedError)
   }
 )
 

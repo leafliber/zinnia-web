@@ -2,12 +2,53 @@
 <html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0, user-scalable=yes" />
+    
+    <!-- PWA 核心配置 -->
+    <link rel="manifest" href="/manifest.json" />
+    <meta name="theme-color" content="#1890ff" />
+    
+    <!-- 图标配置 -->
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="apple-touch-icon" href="/icons/icon-192x192.png" />
+    
+    <!-- iOS PWA 配置 -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <meta name="apple-mobile-web-app-title" content="Zinnia" />
+    
+    <!-- Android PWA 配置 -->
+    <meta name="mobile-web-app-capable" content="yes" />
+    
+    <!-- SEO 和社交分享 -->
+    <meta name="description" content="Zinnia - 设备电量监控与预警系统，实时监控设备电量状态" />
+    <meta name="keywords" content="设备监控,电量监控,IoT,预警系统" />
+    
+    <!-- Open Graph -->
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content="Zinnia - 设备监控平台" />
+    <meta property="og:description" content="设备电量监控与预警系统" />
+    <meta property="og:image" content="/icons/icon-512x512.png" />
+    
     <title>Zinnia - 设备监控平台</title>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
+    
+    <!-- Service Worker 注册 -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js')
+            .then((registration) => {
+              console.log('SW registered:', registration.scope);
+            })
+            .catch((error) => {
+              console.log('SW registration failed:', error);
+            });
+        });
+      }
+    </script>
   </body>
 </html>

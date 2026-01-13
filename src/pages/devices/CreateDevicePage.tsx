@@ -1,12 +1,12 @@
 import React, { useState } from 'react'
-import { Form, Input, Button, Card, Typography, Space, Alert, Result, Steps, message } from 'antd'
+import { Form, Input, Button, Card, Typography, Space, Alert, Result, Steps } from 'antd'
 import { ArrowLeftOutlined, CheckCircleOutlined } from '@ant-design/icons'
 import { useNavigate } from 'react-router-dom'
 import { useDevices } from '@/hooks'
 import { CopyableKey } from '@/components'
 import type { CreateDeviceRequest, CreateDeviceResponse } from '@/types'
 
-const { Title, Text, Paragraph } = Typography
+const { Title, Paragraph } = Typography
 
 export const CreateDevicePage: React.FC = () => {
   const navigate = useNavigate()

@@ -1,28 +1,78 @@
-import React, { useState } from 'react'
-import { Layout } from 'antd'
+import React, { useState, useEffect } from 'react'
+import { Layout, Drawer, Grid } from 'antd'
 import { Outlet } from 'react-router-dom'
 import { Header } from './Header'
 import { Sidebar } from './Sidebar'
 import { useRefreshToken } from '@/hooks'
 
 const { Content } = Layout
+const { useBreakpoint } = Grid
 
 export const AppLayout: React.FC = () => {
+  const screens = useBreakpoint()
+  const isMobile = !screens.md
   const [collapsed, setCollapsed] = useState(false)
+  const [drawerVisible, setDrawerVisible] = useState(false)
 
   // 启用 Token 自动刷新
   useRefreshToken()
 
+  // 响应屏幕变化自动折叠侧边栏
+  useEffect(() => {
+    if (isMobile) {
+      setCollapsed(true)
+    }
+  }, [isMobile])
+
+  const handleToggleSidebar = () => {
+    if (isMobile) {
+      setDrawerVisible(!drawerVisible)
+    } else {
+      setCollapsed(!collapsed)
+    }
+  }
+
+  const handleDrawerClose = () => {
+    setDrawerVisible(false)
+  }
+
   return (
     <Layout style={{ minHeight: '100vh' }}>
-      <Header />
+      <Header onMenuClick={handleToggleSidebar} isMobile={isMobile} />
       <Layout>
-        <Sidebar collapsed={collapsed} onCollapse={setCollapsed} />
-        <Layout style={{ padding: '24px' }}>
+        {/* 桌面端侧边栏 */}
+        {!isMobile && (
+          <Sidebar collapsed={collapsed} onCollapse={setCollapsed} />
+        )}
+        
+        {/* 移动端抽屉式侧边栏 */}
+        {isMobile && (
+          <Drawer
+            placement="left"
+            open={drawerVisible}
+            onClose={handleDrawerClose}
+            styles={{ body: { padding: 0 } }}
+            width={250}
+          >
+            <Sidebar 
+              collapsed={false} 
+              onCollapse={() => {}} 
+              onMenuClick={handleDrawerClose}
+              isMobile={true}
+            />
+          </Drawer>
+        )}
+        
+        <Layout 
+          style={{ 
+            padding: isMobile ? '12px' : '24px',
+            paddingBottom: isMobile ? 'calc(12px + env(safe-area-inset-bottom))' : '24px',
+          }}
+        >
           <Content
             style={{
               background: '#fff',
-              padding: 24,
+              padding: isMobile ? 12 : 24,
               margin: 0,
               minHeight: 280,
               borderRadius: 8,

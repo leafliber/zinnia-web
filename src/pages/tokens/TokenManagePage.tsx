@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react'
 import {
-  Card,
   Table,
   Button,
   Space,
@@ -15,12 +14,10 @@ import {
   Popconfirm,
   message,
   Alert,
-  Tooltip,
 } from 'antd'
 import {
   ArrowLeftOutlined,
   PlusOutlined,
-  DeleteOutlined,
   ReloadOutlined,
   WarningOutlined,
 } from '@ant-design/icons'
@@ -45,7 +42,7 @@ export const TokenManagePage: React.FC = () => {
   const [newToken, setNewToken] = useState<DeviceToken | null>(null)
   const [revokeAllLoading, setRevokeAllLoading] = useState(false)
   const [includeRevoked, setIncludeRevoked] = useState(false)
-  const [includeExpired, setIncludeExpired] = useState(false)
+  const [includeExpired] = useState(false)
 
   useEffect(() => {
     if (id) {

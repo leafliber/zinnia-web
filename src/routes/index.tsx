@@ -1,21 +1,27 @@
-import React from 'react'
+import React, { lazy, Suspense } from 'react'
 import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
-import { AppLayout } from '@/components'
+import { AppLayout, LoadingSpinner } from '@/components'
 import { useAuthStore } from '@/stores'
-import {
-  LoginPage,
-  RegisterPage,
-  DashboardPage,
-  DeviceListPage,
-  CreateDevicePage,
-  DeviceDetailPage,
-  DeviceConfigPage,
-  TokenManagePage,
-  AlertRulesPage,
-  AlertEventsPage,
-  ProfilePage,
-  SecurityPage,
-} from '@/pages'
+
+// 使用动态导入实现代码分割
+const LoginPage = lazy(() => import('@/pages').then(m => ({ default: m.LoginPage })))
+const RegisterPage = lazy(() => import('@/pages').then(m => ({ default: m.RegisterPage })))
+const ForgotPasswordPage = lazy(() => import('@/pages').then(m => ({ default: m.ForgotPasswordPage })))
+const DashboardPage = lazy(() => import('@/pages').then(m => ({ default: m.DashboardPage })))
+const DeviceListPage = lazy(() => import('@/pages').then(m => ({ default: m.DeviceListPage })))
+const CreateDevicePage = lazy(() => import('@/pages').then(m => ({ default: m.CreateDevicePage })))
+const DeviceDetailPage = lazy(() => import('@/pages').then(m => ({ default: m.DeviceDetailPage })))
+const DeviceConfigPage = lazy(() => import('@/pages').then(m => ({ default: m.DeviceConfigPage })))
+const TokenManagePage = lazy(() => import('@/pages').then(m => ({ default: m.TokenManagePage })))
+const AlertRulesPage = lazy(() => import('@/pages').then(m => ({ default: m.AlertRulesPage })))
+const AlertEventsPage = lazy(() => import('@/pages').then(m => ({ default: m.AlertEventsPage })))
+const ProfilePage = lazy(() => import('@/pages').then(m => ({ default: m.ProfilePage })))
+const SecurityPage = lazy(() => import('@/pages').then(m => ({ default: m.SecurityPage })))
+
+// Suspense 包装组件
+const SuspenseWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
+  <Suspense fallback={<LoadingSpinner />}>{children}</Suspense>
+)
 
 // 需要认证的路由守卫
 const ProtectedRoute: React.FC = () => {
@@ -46,11 +52,15 @@ export const router = createBrowserRouter([
     children: [
       {
         path: '/login',
-        element: <LoginPage />,
+        element: <SuspenseWrapper><LoginPage /></SuspenseWrapper>,
       },
       {
         path: '/register',
-        element: <RegisterPage />,
+        element: <SuspenseWrapper><RegisterPage /></SuspenseWrapper>,
+      },
+      {
+        path: '/forgot-password',
+        element: <SuspenseWrapper><ForgotPasswordPage /></SuspenseWrapper>,
       },
     ],
   },
@@ -64,43 +74,43 @@ export const router = createBrowserRouter([
         children: [
           {
             index: true,
-            element: <DashboardPage />,
+            element: <SuspenseWrapper><DashboardPage /></SuspenseWrapper>,
           },
           {
             path: 'devices',
-            element: <DeviceListPage />,
+            element: <SuspenseWrapper><DeviceListPage /></SuspenseWrapper>,
           },
           {
             path: 'devices/new',
-            element: <CreateDevicePage />,
+            element: <SuspenseWrapper><CreateDevicePage /></SuspenseWrapper>,
           },
           {
             path: 'devices/:id',
-            element: <DeviceDetailPage />,
+            element: <SuspenseWrapper><DeviceDetailPage /></SuspenseWrapper>,
           },
           {
             path: 'devices/:id/config',
-            element: <DeviceConfigPage />,
+            element: <SuspenseWrapper><DeviceConfigPage /></SuspenseWrapper>,
           },
           {
             path: 'devices/:id/tokens',
-            element: <TokenManagePage />,
+            element: <SuspenseWrapper><TokenManagePage /></SuspenseWrapper>,
           },
           {
             path: 'alerts/rules',
-            element: <AlertRulesPage />,
+            element: <SuspenseWrapper><AlertRulesPage /></SuspenseWrapper>,
           },
           {
             path: 'alerts/events',
-            element: <AlertEventsPage />,
+            element: <SuspenseWrapper><AlertEventsPage /></SuspenseWrapper>,
           },
           {
             path: 'settings/profile',
-            element: <ProfilePage />,
+            element: <SuspenseWrapper><ProfilePage /></SuspenseWrapper>,
           },
           {
             path: 'settings/security',
-            element: <SecurityPage />,
+            element: <SuspenseWrapper><SecurityPage /></SuspenseWrapper>,
           },
         ],
       },
@@ -112,4 +122,8 @@ export const router = createBrowserRouter([
     path: '*',
     element: <Navigate to="/" replace />,
   },
-])
+], {
+  future: {
+    v7_startTransition: true,
+  },
+})

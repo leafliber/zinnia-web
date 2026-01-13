@@ -4,19 +4,17 @@ import {
   Form,
   Input,
   Button,
-  Space,
   Typography,
-  Divider,
   Alert,
   message,
   Popconfirm,
 } from 'antd'
-import { LockOutlined, LogoutOutlined, WarningOutlined } from '@ant-design/icons'
+import { LockOutlined, LogoutOutlined } from '@ant-design/icons'
 import { authApi } from '@/api'
 import { useAuth } from '@/hooks'
 import type { ChangePasswordRequest } from '@/types'
 
-const { Title, Text, Paragraph } = Typography
+const { Title, Paragraph } = Typography
 
 export const SecurityPage: React.FC = () => {
   const { logout } = useAuth()

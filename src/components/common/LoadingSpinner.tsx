@@ -10,7 +10,7 @@ interface LoadingSpinnerProps {
 
 export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
   size = 'default',
-  tip = '加载中...',
+  tip,
   fullScreen = false,
 }) => {
   const antIcon = <LoadingOutlined style={{ fontSize: size === 'large' ? 48 : 24 }} spin />
@@ -26,7 +26,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
           width: '100%',
         }}
       >
-        <Spin indicator={antIcon} tip={tip} size={size} />
+        <Spin indicator={antIcon} {...(tip ? { tip } : {})} size={size} />
       </div>
     )
   }
@@ -40,7 +40,7 @@ export const LoadingSpinner: React.FC<LoadingSpinnerProps> = ({
         padding: '40px 0',
       }}
     >
-      <Spin indicator={antIcon} tip={tip} size={size} />
+      <Spin indicator={antIcon} size={size} />
     </div>
   )
 }

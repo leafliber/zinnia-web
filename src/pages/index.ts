@@ -1,4 +1,4 @@
-export { LoginPage, RegisterPage } from './auth'
+export { LoginPage, RegisterPage, ForgotPasswordPage } from './auth'
 export { DashboardPage } from './dashboard'
 export { DeviceListPage, CreateDevicePage, DeviceDetailPage, DeviceConfigPage } from './devices'
 export { TokenManagePage } from './tokens'

@@ -1,6 +1,6 @@
-import React, { useState } from 'react'
-import { Form, Input, Button, Card, Typography, Space, Divider } from 'antd'
-import { UserOutlined, LockOutlined, MailOutlined } from '@ant-design/icons'
+import React from 'react'
+import { Form, Input, Button, Card, Typography, Divider } from 'antd'
+import { LockOutlined, MailOutlined } from '@ant-design/icons'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/hooks'
 
@@ -69,6 +69,16 @@ export const LoginPage: React.FC = () => {
               placeholder="密码"
               size="large"
             />
+          </Form.Item>
+
+          <Form.Item style={{ marginBottom: 12 }}>
+            <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Link to="/forgot-password">
+                <Button type="link" style={{ padding: 0 }}>
+                  忘记密码？
+                </Button>
+              </Link>
+            </div>
           </Form.Item>
 
           <Form.Item>

@@ -7,9 +7,7 @@ import {
   Button,
   Space,
   Typography,
-  Spin,
   message,
-  Descriptions,
   Alert,
 } from 'antd'
 import { ArrowLeftOutlined, SaveOutlined, ReloadOutlined, KeyOutlined } from '@ant-design/icons'
@@ -18,7 +16,7 @@ import { devicesApi } from '@/api'
 import { CopyableKey, LoadingSpinner } from '@/components'
 import type { DeviceConfig, UpdateDeviceConfigRequest, RotateKeyResponse } from '@/types'
 
-const { Title, Text, Paragraph } = Typography
+const { Title } = Typography
 
 export const DeviceConfigPage: React.FC = () => {
   const { id } = useParams<{ id: string }>()

@@ -1,0 +1,8 @@
+# Cloudflare Pages / Netlify 重定向规则
+# 用于单页应用（SPA）路由支持
+
+# SPA 路由回退
+/*    /index.html   200
+
+# API 代理（如果需要）
+# /api/*  https://api.zinnia.example.com/api/:splat  200

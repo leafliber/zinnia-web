@@ -114,6 +114,61 @@ src/
 
 开发环境下，API 请求会代理到 `http://localhost:8080`，可在 `vite.config.ts` 中修改。
 
+## 部署
+
+支持多种部署方式，详细说明请参考 [docs/DEPLOYMENT.md](docs/DEPLOYMENT.md)。
+
+### 快速部署
+
+#### GitHub Pages
+
+```bash
+# 配置 GitHub Actions 后，推送即可自动部署
+git push origin main
+```
+
+#### Cloudflare Pages
+
+```bash
+# 方式一：通过 GitHub 集成（推荐）
+# 在 Cloudflare Dashboard 连接 GitHub 仓库
+
+# 方式二：使用 Wrangler CLI
+npm run build
+wrangler pages deploy dist --project-name=zinnia-web
+```
+
+#### 其他平台
+
+```bash
+# Vercel
+vercel --prod
+
+# Netlify
+netlify deploy --prod --dir=dist
+
+# Docker
+docker build -t zinnia-web .
+docker run -p 8080:80 zinnia-web
+```
+
+### 环境变量配置
+
+部署时需要设置以下环境变量：
+
+```env
+VITE_API_BASE_URL=https://api.zinnia.example.com/api/v1
+```
+
+## PWA 支持
+
+本项目已配置为 Progressive Web App (PWA)，支持：
+
+- ✅ 离线访问（Service Worker）
+- ✅ 安装到主屏幕（manifest.json）
+- ✅ 推送通知
+- ✅ 响应式设计（移动端/平板/桌面）
+
 ## 开发规范
 
 ### 代码风格
@@ -134,6 +189,14 @@ test: 测试相关
 chore: 构建/工具相关
 ```
 
+## 相关文档
+
+- [API 使用清单](docs/FRONTEND_API_USAGE.md) - 前端使用的 API 接口清单
+- [后端 API 参考](docs/API_REFERENCE.md) - 完整的后端 API 文档
+- [部署指南](docs/DEPLOYMENT.md) - 详细的部署说明
+- [注册安全文档](docs/registration-security.md) - 注册功能的安全设计
+
 ## License
 
 MIT
+

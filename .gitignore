@@ -12,12 +12,15 @@ build/
 .env
 .env.local
 .env.*.local
+!.env.example
+!.env.production
 
 # Logs
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
+lerna-debug.log*
 
 # Editor
 .idea/
@@ -34,6 +37,14 @@ Thumbs.db
 # Testing
 coverage/
 
+# Deployment
+.vercel
+.netlify
+
 # Misc
 *.local
 *.tgz
+
+# Wrangler
+.wrangler/
+

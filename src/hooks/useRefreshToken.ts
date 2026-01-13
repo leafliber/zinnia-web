@@ -10,7 +10,7 @@ import { TOKEN_REFRESH_INTERVAL } from '@/utils/constants'
  */
 export const useRefreshToken = () => {
   const { isAuthenticated, logout } = useAuthStore()
-  const intervalRef = useRef<NodeJS.Timeout | null>(null)
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
 
   useEffect(() => {
     if (!isAuthenticated) {

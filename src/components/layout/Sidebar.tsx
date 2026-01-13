@@ -15,9 +15,16 @@ const { Sider } = Layout
 interface SidebarProps {
   collapsed: boolean
   onCollapse: (collapsed: boolean) => void
+  onMenuClick?: () => void
+  isMobile?: boolean
 }
 
-export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
+export const Sidebar: React.FC<SidebarProps> = ({ 
+  collapsed, 
+  onCollapse, 
+  onMenuClick,
+  isMobile = false 
+}) => {
   const navigate = useNavigate()
   const location = useLocation()
 
@@ -32,18 +39,24 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
     return 'dashboard'
   }
 
+  const handleNavigate = (path: string) => {
+    navigate(path)
+    // 移动端点击菜单后关闭抽屉
+    onMenuClick?.()
+  }
+
   const menuItems: MenuProps['items'] = [
     {
       key: 'dashboard',
       icon: <DashboardOutlined />,
       label: '仪表盘',
-      onClick: () => navigate('/'),
+      onClick: () => handleNavigate('/'),
     },
     {
       key: 'devices',
       icon: <DesktopOutlined />,
       label: '设备管理',
-      onClick: () => navigate('/devices'),
+      onClick: () => handleNavigate('/devices'),
     },
     {
       key: 'alerts',
@@ -54,13 +67,13 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
           key: 'alert-rules',
           icon: <SettingOutlined />,
           label: '预警规则',
-          onClick: () => navigate('/alerts/rules'),
+          onClick: () => handleNavigate('/alerts/rules'),
         },
         {
           key: 'alert-events',
           icon: <BellOutlined />,
           label: '预警事件',
-          onClick: () => navigate('/alerts/events'),
+          onClick: () => handleNavigate('/alerts/events'),
         },
       ],
     },
@@ -68,9 +81,25 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
       key: 'settings',
       icon: <SettingOutlined />,
       label: '系统设置',
-      onClick: () => navigate('/settings/profile'),
+      onClick: () => handleNavigate('/settings/profile'),
     },
   ]
+
+  // 移动端模式下，直接渲染 Menu（不需要 Sider 包裹，因为已经在 Drawer 中）
+  if (isMobile) {
+    return (
+      <Menu
+        mode="inline"
+        selectedKeys={[getSelectedKey()]}
+        defaultOpenKeys={['alerts']}
+        items={menuItems}
+        style={{ 
+          borderRight: 0,
+          height: '100%',
+        }}
+      />
+    )
+  }
 
   return (
     <Sider
@@ -78,6 +107,8 @@ export const Sidebar: React.FC<SidebarProps> = ({ collapsed, onCollapse }) => {
       collapsed={collapsed}
       onCollapse={onCollapse}
       theme="light"
+      breakpoint="lg"
+      collapsedWidth={80}
       style={{
         overflow: 'auto',
         height: 'calc(100vh - 64px)',
