@@ -13,6 +13,7 @@ import {
   Switch,
   Popconfirm,
   message,
+  Alert,
 } from 'antd'
 import { PlusOutlined, EditOutlined, DeleteOutlined, ReloadOutlined } from '@ant-design/icons'
 import { alertsApi } from '@/api'
@@ -125,20 +126,6 @@ export const AlertRulesPage: React.FC = () => {
       ),
     },
     {
-      title: '阈值',
-      dataIndex: 'threshold_value',
-      key: 'threshold_value',
-      render: (value: number, record: AlertRule) => {
-        if (record.alert_type.includes('battery')) {
-          return `${value}%`
-        }
-        if (record.alert_type === 'high_temperature') {
-          return `${value}°C`
-        }
-        return value
-      },
-    },
-    {
       title: '冷却时间',
       dataIndex: 'cooldown_minutes',
       key: 'cooldown_minutes',
@@ -221,6 +208,15 @@ export const AlertRulesPage: React.FC = () => {
         </Space>
       </div>
 
+      <Alert
+        message="提示"
+        description="预警触发阈值在各设备的配置页面中设置，规则只定义预警级别和冷却时间。"
+        type="info"
+        showIcon
+        closable
+        style={{ marginBottom: 16 }}
+      />
+
       <Table columns={columns} dataSource={rules} rowKey="id" loading={loading} pagination={false} />
 
       {/* 创建/编辑规则弹窗 */}
@@ -231,6 +227,13 @@ export const AlertRulesPage: React.FC = () => {
         footer={null}
         width={500}
       >
+        <Alert
+          message="注意"
+          description="预警触发阈值需在设备配置页面中设置。此规则只定义预警级别和冷却时间。"
+          type="info"
+          showIcon
+          style={{ marginBottom: 16 }}
+        />
         <Form form={form} layout="vertical" onFinish={handleSubmit}>
           <Form.Item
             name="name"
@@ -257,15 +260,6 @@ export const AlertRulesPage: React.FC = () => {
             rules={[{ required: true, message: '请选择预警级别' }]}
           >
             <Select placeholder="选择预警级别" options={alertLevelOptions} />
-          </Form.Item>
-
-          <Form.Item
-            name="threshold_value"
-            label="触发阈值"
-            rules={[{ required: true, message: '请输入触发阈值' }]}
-            extra="电量阈值为百分比（0-100），温度阈值为摄氏度"
-          >
-            <InputNumber min={0} max={100} style={{ width: '100%' }} />
           </Form.Item>
 
           <Form.Item

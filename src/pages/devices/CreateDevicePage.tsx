@@ -140,6 +140,7 @@ export const CreateDevicePage: React.FC = () => {
               <p><strong>设备 ID：</strong>{createdDevice.device.id}</p>
               <p><strong>低电量阈值：</strong>{createdDevice.config.low_battery_threshold}%</p>
               <p><strong>临界电量阈值：</strong>{createdDevice.config.critical_battery_threshold}%</p>
+              <p><strong>高温阈值：</strong>{createdDevice.config.high_temperature_threshold}℃</p>
               <p><strong>上报间隔：</strong>{createdDevice.config.report_interval_seconds} 秒</p>
             </Card>
           </div>

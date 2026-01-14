@@ -18,7 +18,6 @@ export interface AlertRule {
   name: string
   alert_type: AlertType
   level: AlertLevel
-  threshold_value: number
   cooldown_minutes: number
   enabled: boolean
   created_at: string
@@ -30,7 +29,6 @@ export interface CreateAlertRuleRequest {
   name: string
   alert_type: AlertType
   level: AlertLevel
-  threshold_value: number
   cooldown_minutes?: number
   enabled?: boolean
 }
@@ -40,7 +38,6 @@ export interface UpdateAlertRuleRequest {
   name?: string
   alert_type?: AlertType
   level?: AlertLevel
-  threshold_value?: number
   cooldown_minutes?: number
   enabled?: boolean
 }

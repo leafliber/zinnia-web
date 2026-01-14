@@ -43,6 +43,7 @@ export interface DeviceConfig {
   critical_battery_threshold: number
   report_interval_seconds: number
   power_saving_enabled: boolean
+  high_temperature_threshold: number
   updated_at?: string
 }
 
@@ -52,6 +53,7 @@ export interface UpdateDeviceConfigRequest {
   critical_battery_threshold?: number
   report_interval_seconds?: number
   power_saving_enabled?: boolean
+  high_temperature_threshold?: number
 }
 
 // 轮换密钥响应

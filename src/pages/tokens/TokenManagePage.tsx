@@ -25,7 +25,7 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { devicesApi } from '@/api'
 import { CopyableKey, LoadingSpinner } from '@/components'
 import { formatDateTime, formatRelativeTime } from '@/utils'
-import type { DeviceToken, CreateDeviceTokenRequest, TokenPermission } from '@/types'
+import type { DeviceToken, CreateDeviceTokenRequest, TokenPermission, Device } from '@/types'
 import type { ColumnsType } from 'antd/es/table'
 
 const { Title, Text } = Typography
@@ -36,6 +36,9 @@ export const TokenManagePage: React.FC = () => {
   const [form] = Form.useForm()
 
   const [tokens, setTokens] = useState<DeviceToken[]>([])
+  const [device, setDevice] = useState<Device | null>(null)
+  const [rotating, setRotating] = useState(false)
+  const [mainKey, setMainKey] = useState<{ api_key_prefix: string } | null>(null)
   const [loading, setLoading] = useState(true)
   const [createModalOpen, setCreateModalOpen] = useState(false)
   const [creating, setCreating] = useState(false)
@@ -47,8 +50,34 @@ export const TokenManagePage: React.FC = () => {
   useEffect(() => {
     if (id) {
       loadTokens()
+      loadDevice()
     }
   }, [id, includeRevoked, includeExpired])
+
+  const loadDevice = async () => {
+    if (!id) return
+    try {
+      const data = await devicesApi.getDevice(id)
+      setDevice(data)
+      setMainKey({ api_key_prefix: data.api_key_prefix })
+    } catch (error) {
+      // 忽略错误
+    }
+  }
+  const handleRotateMainKey = async () => {
+    if (!id) return
+    setRotating(true)
+    try {
+      const res = await devicesApi.rotateDeviceKey(id)
+      setMainKey({ api_key_prefix: res.api_key_prefix })
+      message.success('主 API Key 已轮换')
+      loadDevice()
+    } catch (error) {
+      message.error('轮换主 API Key 失败')
+    } finally {
+      setRotating(false)
+    }
+  }
 
   const loadTokens = async () => {
     if (!id) return
@@ -120,7 +149,23 @@ export const TokenManagePage: React.FC = () => {
     all: 'green',
   }
 
-  const columns: ColumnsType<DeviceToken> = [
+  // 主API Key虚拟行
+  const mainKeyRow = mainKey
+    ? [{
+        id: 'main-api-key',
+        name: '主 API Key',
+        token_prefix: mainKey.api_key_prefix,
+        permission: 'all' as TokenPermission,
+        is_revoked: false,
+        expires_at: null,
+        last_used_at: null,
+        use_count: 0,
+        created_at: device?.created_at || new Date().toISOString(),
+        isMain: true,
+      }]
+    : []
+
+  const columns: ColumnsType<any> = [
     {
       title: '名称',
       dataIndex: 'name',
@@ -143,7 +188,10 @@ export const TokenManagePage: React.FC = () => {
     {
       title: '状态',
       key: 'status',
-      render: (_: unknown, record: DeviceToken) => {
+      render: (_: unknown, record: any) => {
+        if (record.isMain) {
+          return <Tag color="blue">主密钥</Tag>
+        }
         if (record.is_revoked) {
           return <Tag color="red">已吊销</Tag>
         }
@@ -157,6 +205,7 @@ export const TokenManagePage: React.FC = () => {
       title: '使用次数',
       dataIndex: 'use_count',
       key: 'use_count',
+      render: (count: number, record: any) => record.isMain ? '-' : count,
     },
     {
       title: '最后使用',
@@ -179,7 +228,14 @@ export const TokenManagePage: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      render: (_: unknown, record: DeviceToken) => {
+      render: (_: unknown, record: any) => {
+        if (record.isMain) {
+          return (
+            <Button type="link" icon={<ReloadOutlined />} loading={rotating} onClick={handleRotateMainKey}>
+              轮换
+            </Button>
+          )
+        }
         if (record.is_revoked) {
           return <Text type="secondary">已吊销</Text>
         }
@@ -265,8 +321,8 @@ export const TokenManagePage: React.FC = () => {
 
       <Table
         columns={columns}
-        dataSource={tokens}
-        rowKey="id"
+        dataSource={[...mainKeyRow, ...tokens]}
+        rowKey={row => row.id}
         loading={loading}
         pagination={false}
       />

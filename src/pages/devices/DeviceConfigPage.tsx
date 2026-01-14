@@ -125,6 +125,18 @@ export const DeviceConfigPage: React.FC = () => {
           </Form.Item>
 
           <Form.Item
+            name="high_temperature_threshold"
+            label="高温阈值（℃）"
+            rules={[
+              { required: true, message: '请输入高温阈值' },
+              { type: 'number', min: -40, max: 200, message: '阈值范围为 -40℃ 到 200℃' },
+            ]}
+            extra="当温度高于此值时，触发高温预警"
+          >
+            <InputNumber min={-40} max={200} style={{ width: '100%' }} />
+          </Form.Item>
+
+          <Form.Item
             name="report_interval_seconds"
             label="上报间隔（秒）"
             rules={[
@@ -134,14 +146,6 @@ export const DeviceConfigPage: React.FC = () => {
             extra="设备上报电量数据的间隔时间"
           >
             <InputNumber min={10} max={3600} style={{ width: '100%' }} />
-          </Form.Item>
-
-          <Form.Item
-            name="power_saving_enabled"
-            label="省电模式"
-            valuePropName="checked"
-          >
-            <Switch checkedChildren="开启" unCheckedChildren="关闭" />
           </Form.Item>
 
           <Form.Item>

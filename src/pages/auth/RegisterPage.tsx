@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import { Form, Input, Button, Card, Typography, Divider, message, Alert, Spin } from 'antd'
 import { UserOutlined, LockOutlined, MailOutlined, SafetyOutlined } from '@ant-design/icons'
 import { Link, useNavigate } from 'react-router-dom'
@@ -21,6 +21,10 @@ export const RegisterPage: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false)
   const [isConfigLoading, setIsConfigLoading] = useState(true)
   const [config, setConfig] = useState<RegistrationConfig | null>(null)
+  const [registerError, setRegisterError] = useState<string>('')
+  const registerErrorTimer = useRef<number | null>(null)
+  const [registerErrorProgress, setRegisterErrorProgress] = useState<number>(100)
+  const registerErrorInterval = useRef<number | null>(null)
 
   // reCAPTCHA 和验证码状态
   const [recaptchaToken, setRecaptchaToken] = useState<string | undefined>()
@@ -66,6 +70,9 @@ export const RegisterPage: React.FC = () => {
 
   // 提交注册
   const handleSubmit = async (values: RegisterFormValues) => {
+    // 清除之前的错误信息
+    setRegisterError('')
+
     // 验证 reCAPTCHA
     if (config?.require_recaptcha && !recaptchaToken) {
       message.error('请完成人机验证')
@@ -94,13 +101,69 @@ export const RegisterPage: React.FC = () => {
       })
       message.success('注册成功，请登录')
       navigate('/login')
-    } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : '注册失败，请稍后重试'
-      message.error(errorMessage)
+    } catch (error: any) {
+      // 解析后端返回的错误信息
+      let errorMessage = '注册失败，请稍后重试'
+      
+      if (error?.response?.data) {
+        const data = error.response.data
+        // 优先使用 message 字段，其次使用 details 字段
+        errorMessage = data.message || data.details || errorMessage
+      } else if (error instanceof Error) {
+        errorMessage = error.message
+      }
+      
+      // 清除之前的定时器（如果有）
+      if (registerErrorTimer.current) {
+        window.clearTimeout(registerErrorTimer.current)
+        registerErrorTimer.current = null
+      }
+      if (registerErrorInterval.current) {
+        window.clearInterval(registerErrorInterval.current)
+        registerErrorInterval.current = null
+      }
+
+      // 设置错误并启动进度条更新
+      setRegisterError(errorMessage)
+      setRegisterErrorProgress(100)
+      const start = Date.now()
+      const duration = 3000
+      registerErrorInterval.current = window.setInterval(() => {
+        const elapsed = Date.now() - start
+        const percent = Math.max(0, 100 - (elapsed / duration) * 100)
+        setRegisterErrorProgress(percent)
+        if (elapsed >= duration && registerErrorInterval.current) {
+          window.clearInterval(registerErrorInterval.current)
+          registerErrorInterval.current = null
+        }
+      }, 100)
+
+      registerErrorTimer.current = window.setTimeout(() => {
+        if (registerErrorInterval.current) {
+          window.clearInterval(registerErrorInterval.current)
+          registerErrorInterval.current = null
+        }
+        setRegisterError('')
+        registerErrorTimer.current = null
+      }, duration)
     } finally {
       setIsLoading(false)
     }
   }
+
+  // 组件卸载时清除可能存在的计时器
+  useEffect(() => {
+    return () => {
+      if (registerErrorTimer.current) {
+        window.clearTimeout(registerErrorTimer.current)
+        registerErrorTimer.current = null
+      }
+      if (registerErrorInterval.current) {
+        window.clearInterval(registerErrorInterval.current)
+        registerErrorInterval.current = null
+      }
+    }
+  }, [])
 
   // 加载中显示
   if (isConfigLoading) {
@@ -161,6 +224,54 @@ export const RegisterPage: React.FC = () => {
             icon={<SafetyOutlined />}
             style={{ marginBottom: 16 }}
           />
+        )}
+
+        {/* 显示注册失败错误信息 */}
+        {registerError && (
+          <div style={{ position: 'relative', marginBottom: 16 }}>
+            <Alert
+              message={registerError}
+              type="error"
+              showIcon
+              closable
+              onClose={() => {
+                if (registerErrorTimer.current) {
+                  window.clearTimeout(registerErrorTimer.current)
+                  registerErrorTimer.current = null
+                }
+                if (registerErrorInterval.current) {
+                  window.clearInterval(registerErrorInterval.current)
+                  registerErrorInterval.current = null
+                }
+                setRegisterError('')
+              }}
+            />
+
+            {/* 进度条背景（底部） */}
+            <div
+              aria-hidden
+              style={{
+                position: 'absolute',
+                left: 0,
+                bottom: 0,
+                height: 4,
+                width: '100%',
+                background: 'rgba(0,0,0,0.04)',
+                borderBottomLeftRadius: 6,
+                borderBottomRightRadius: 6,
+                overflow: 'hidden',
+              }}
+            >
+              <div
+                style={{
+                  height: '100%',
+                  width: `${registerErrorProgress}%`,
+                  background: 'rgba(255,77,79,0.9)',
+                  transition: 'width 100ms linear',
+                }}
+              />
+            </div>
+          </div>
         )}
 
         <Form
