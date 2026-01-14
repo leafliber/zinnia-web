@@ -28,34 +28,20 @@ export default defineConfig(({ mode }) => ({
     sourcemap: mode !== 'production',
     // 增加 chunk 大小警告限制到 1500KB
     chunkSizeWarningLimit: 1500,
-    // 优化分块策略
+    // 优化分块策略（避免循环依赖）
     rollupOptions: {
       output: {
         manualChunks: (id) => {
-          // ECharts 和相关依赖（最大的包，单独分离）
+          // 仅分离 ECharts（最大的独立包）
           if (id.includes('node_modules/echarts') || 
-              id.includes('node_modules/zrender') ||
-              id.includes('echarts-for-react')) {
+              id.includes('node_modules/zrender')) {
             return 'echarts'
           }
-          // React 生态系统（必须在 antd 之前，避免循环依赖）
-          if (id.includes('node_modules/react') || 
-              id.includes('node_modules/react-dom') ||
-              id.includes('node_modules/react-router') ||
-              id.includes('node_modules/scheduler')) {
-            return 'react'
-          }
-          // Ant Design 核心和相关依赖（包含图标）
-          if (id.includes('node_modules/antd') || 
-              id.includes('node_modules/@ant-design') ||
-              id.includes('node_modules/rc-') ||
-              id.includes('node_modules/@rc-component')) {
-            return 'antd'
-          }
-          // 其他 node_modules 依赖
+          // 所有其他 node_modules 依赖放在一起，避免循环依赖
           if (id.includes('node_modules')) {
             return 'vendor'
           }
+          // 应用代码由 Vite 自动处理
         },
       },
     },
