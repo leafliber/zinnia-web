@@ -42,7 +42,6 @@ export interface DeviceConfig {
   low_battery_threshold: number
   critical_battery_threshold: number
   report_interval_seconds: number
-  power_saving_enabled: boolean
   high_temperature_threshold: number
   updated_at?: string
 }
@@ -52,7 +51,6 @@ export interface UpdateDeviceConfigRequest {
   low_battery_threshold?: number
   critical_battery_threshold?: number
   report_interval_seconds?: number
-  power_saving_enabled?: boolean
   high_temperature_threshold?: number
 }
 

@@ -4,6 +4,7 @@ export type UserRole = 'admin' | 'user' | 'readonly'
 // 用户信息
 export interface User {
   id: string
+  user_id?: string // 后端返回的用户ID（与id相同）
   email: string
   username: string
   role: UserRole

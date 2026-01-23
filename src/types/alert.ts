@@ -15,6 +15,7 @@ export type AlertStatus = 'active' | 'acknowledged' | 'resolved'
 // 预警规则
 export interface AlertRule {
   id: string
+  user_id?: string // 所属用户ID
   name: string
   alert_type: AlertType
   level: AlertLevel

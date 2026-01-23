@@ -49,6 +49,7 @@ export const EmailVerification: React.FC<EmailVerificationProps> = ({
     try {
       const result = await securityApi.sendVerificationCode({
         email,
+        purpose: 'registration',
         recaptcha_token: recaptchaToken,
       })
       message.success(result.message || '验证码已发送到您的邮箱')

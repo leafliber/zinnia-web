@@ -14,6 +14,7 @@ export interface RegistrationConfig {
 // 发送验证码请求
 export interface SendVerificationCodeRequest {
   email: string
+  purpose: 'registration' | 'password_reset'
   recaptcha_token?: string
 }
 

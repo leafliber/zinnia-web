@@ -535,6 +535,163 @@ DELETE /api/v1/users/{user_id}
 
 ---
 
+## Webhook 配置管理
+
+> **注意**: Webhook 配置通过用户通知偏好设置接口管理，以下是相关配置说明
+
+### 配置 Webhook 通知
+
+在用户通知偏好设置中配置 Webhook：
+
+```
+PUT /api/v1/users/me/notifications/preferences
+```
+
+**请求体**:
+```json
+{
+  "webhook_config": {
+    "enabled": true,
+    "url": "https://your-domain.com/webhook/zinnia",
+    "secret": "your-webhook-secret-key",
+    "headers": {
+      "X-Custom-Header": "custom-value"
+    }
+  },
+  "notify_info": true,
+  "notify_warning": true,
+  "notify_critical": true
+}
+```
+
+### Webhook 配置字段说明
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `enabled` | boolean | ✅ | 是否启用 Webhook 通知 |
+| `url` | string | ✅ | Webhook 接收 URL (HTTPS) |
+| `secret` | string | ❌ | 签名密钥 (用于 HMAC-SHA256) |
+| `headers` | object | ❌ | 自定义请求头 (键值对) |
+
+### 获取当前 Webhook 配置
+
+```
+GET /api/v1/users/me/notifications/preferences
+```
+
+**成功响应** (200 OK):
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "webhook_enabled": true,
+    "webhook_url": "https://your-domain.com/webhook/zinnia",
+    "webhook_subscriptions_count": 0
+  }
+}
+```
+
+### Webhook 最佳实践
+
+1. **使用 HTTPS**: 确保 Webhook URL 使用 HTTPS 协议
+2. **验证签名**: 始终验证 `X-Zinnia-Signature` 头
+3. **快速响应**: 在 10 秒内返回 200 OK
+4. **幂等处理**: 处理重复的 Webhook 事件
+5. **错误重试**: 支持指数退避重试机制
+6. **日志记录**: 记录所有 Webhook 请求和响应
+
+### Webhook 安全建议
+
+- **密钥管理**: 定期轮换 `secret` 密钥
+- **IP 白名单**: 限制来源 IP (可选)
+- **速率限制**: 实现适当的速率限制
+- **超时控制**: 设置合理的超时时间
+- **错误监控**: 监控 Webhook 失败率
+
+### 测试 Webhook
+
+可以使用以下 curl 命令测试 Webhook 端点：
+
+```bash
+curl -X POST https://your-domain.com/webhook/zinnia \
+  -H "Content-Type: application/json" \
+  -H "X-Zinnia-Event: test" \
+  -d '{"test": "data"}'
+```
+
+### Webhook 事件类型
+
+当前支持的事件类型：
+- `alert_triggered` - 预警触发
+- `device_status_changed` - 设备状态变更
+- `battery_level_updated` - 电量更新 (可选)
+
+### 响应处理示例
+
+**Node.js Express 示例**:
+```javascript
+app.post('/webhook/zinnia', async (req, res) => {
+  // 验证签名
+  const signature = req.headers['x-zinnia-signature'];
+  if (!verifySignature(req.body, signature, WEBHOOK_SECRET)) {
+    return res.status(401).send('Invalid signature');
+  }
+
+  // 处理事件
+  const { event_type, data } = req.body;
+
+  switch (event_type) {
+    case 'alert_triggered':
+      await handleAlert(data);
+      break;
+    default:
+      console.log('Unknown event type:', event_type);
+  }
+
+  // 快速响应
+  res.status(200).send('OK');
+});
+```
+
+**Python Flask 示例**:
+```python
+from flask import Flask, request, jsonify
+import hmac
+import hashlib
+
+app = Flask(__name__)
+WEBHOOK_SECRET = 'your-secret-key'
+
+@app.route('/webhook/zinnia', methods=['POST'])
+def webhook():
+    # 验证签名
+    signature = request.headers.get('X-Zinnia-Signature', '')
+    payload = request.get_data()
+
+    expected_signature = hmac.new(
+        WEBHOOK_SECRET.encode(),
+        payload,
+        hashlib.sha256
+    ).hexdigest()
+
+    if not hmac.compare_digest(f'sha256={expected_signature}', signature):
+        return jsonify({'error': 'Invalid signature'}), 401
+
+    # 处理事件
+    data = request.json
+    event_type = data.get('event_type')
+
+    if event_type == 'alert_triggered':
+        process_alert(data['data'])
+
+    return jsonify({'status': 'success'}), 200
+```
+
+---
+
+---
+
 ## 设备接口
 
 ### 创建设备
@@ -591,7 +748,8 @@ POST /api/v1/devices
       "low_battery_threshold": 20,
       "critical_battery_threshold": 10,
       "report_interval_seconds": 60,
-      "power_saving_enabled": false
+      "high_temperature_threshold": 45.0,
+      "updated_at": "2026-01-12T10:30:00Z"
     }
   }
 }
@@ -739,7 +897,6 @@ GET /api/v1/devices/{id}/config
     "low_battery_threshold": 20,
     "critical_battery_threshold": 10,
     "report_interval_seconds": 60,
-    "power_saving_enabled": false,
     "high_temperature_threshold": 45.0,
     "updated_at": "2026-01-12T10:30:00Z"
   }
@@ -763,7 +920,7 @@ PUT /api/v1/devices/{id}/config
   "low_battery_threshold": 25,
   "critical_battery_threshold": 10,
   "report_interval_seconds": 120,
-  "power_saving_enabled": true
+  "high_temperature_threshold": 45.0
 }
 ```
 
@@ -772,7 +929,7 @@ PUT /api/v1/devices/{id}/config
 | `low_battery_threshold` | number | ❌ | 1-100 |
 | `critical_battery_threshold` | number | ❌ | 1-100 |
 | `report_interval_seconds` | number | ❌ | 10-3600 秒 |
-| `power_saving_enabled` | boolean | ❌ | - |
+
 
 新增字段：
 | `high_temperature_threshold` | number | ❌ | -40.0 - 200.0（摄氏度） |
@@ -1754,6 +1911,89 @@ GET /health/live
 
 ---
 
+## Webhook 通知配置
+
+### Webhook 通知负载格式
+
+当预警触发时，系统会向配置的 Webhook URL 发送 HTTP POST 请求，负载格式如下：
+
+```json
+{
+  "event_id": "990e8400-e29b-41d4-a716-446655440000",
+  "event_type": "alert_triggered",
+  "timestamp": "2026-01-12T10:30:00.000Z",
+  "data": {
+    "alert_event": {
+      "id": "990e8400-e29b-41d4-a716-446655440000",
+      "device_id": "660e8400-e29b-41d4-a716-446655440000",
+      "rule_id": "880e8400-e29b-41d4-a716-446655440000",
+      "alert_type": "low_battery",
+      "level": "warning",
+      "status": "active",
+      "message": "设备电量低于阈值",
+      "value": 18.0,
+      "threshold": 20.0,
+      "triggered_at": "2026-01-12T10:30:00Z"
+    },
+    "device": {
+      "id": "660e8400-e29b-41d4-a716-446655440000",
+      "name": "客厅传感器",
+      "device_type": "battery_sensor",
+      "status": "online",
+      "owner_id": "550e8400-e29b-41d4-a716-446655440000"
+    },
+    "user": {
+      "id": "550e8400-e29b-41d4-a716-446655440000",
+      "email": "user@example.com",
+      "username": "johndoe"
+    }
+  }
+}
+```
+
+### Webhook 请求头
+
+```
+Content-Type: application/json
+X-Zinnia-Event: alert_triggered
+X-Zinnia-Signature: sha256=... (如果配置了密钥)
+X-Zinnia-Timestamp: 2026-01-12T10:30:00.000Z
+```
+
+### 签名验证
+
+如果配置了 `secret`，系统会使用 HMAC-SHA256 生成签名：
+
+```javascript
+const crypto = require('crypto');
+
+function verifySignature(payload, signature, secret) {
+  const expectedSignature = crypto
+    .createHmac('sha256', secret)
+    .update(JSON.stringify(payload))
+    .digest('hex');
+
+  return `sha256=${expectedSignature}` === signature;
+}
+```
+
+### 响应要求
+
+Webhook 服务应在 10 秒内响应，支持以下状态码：
+
+- **200 OK**: 成功接收，系统将标记通知为已发送
+- **202 Accepted**: 已接受处理，系统将记录但不重试
+- **4xx Client Error**: 客户端错误，系统将重试（最多 3 次）
+- **5xx Server Error**: 服务器错误，系统将重试（最多 3 次，指数退避）
+
+### 重试机制
+
+- **重试次数**: 最多 3 次
+- **重试间隔**: 1秒、3秒、9秒（指数退避）
+- **超时时间**: 每次请求 10 秒超时
+
+---
+
 ## 错误码参考
 
 ### HTTP 状态码
@@ -1767,7 +2007,7 @@ GET /health/live
 | 401 | Unauthorized | 未认证或令牌无效 |
 | 403 | Forbidden | 无权限访问 |
 | 404 | Not Found | 资源不存在 |
-| 409 | Conflict | 资源冲突（如邮箱已存在） |
+| 409 | Conflict | 资源冲突（如邮箱已存在）|
 | 429 | Too Many Requests | 请求频率过高 |
 | 500 | Internal Server Error | 服务器内部错误 |
 
@@ -1903,7 +2143,7 @@ interface DeviceConfig {
   low_battery_threshold: number;
   critical_battery_threshold: number;
   report_interval_seconds: number;
-  power_saving_enabled: boolean;
+  high_temperature_threshold: number;
   updated_at: string;
 }
 
@@ -1997,3 +2237,437 @@ interface PaginatedResponse<T> {
 > 📝 **文档版本**：1.1.0  
 > 📅 **最后更新**：2026-01-13  
 > 🔗 **后端仓库**：zinnia
+
+---
+
+## WebSocket 接口
+
+### 概述
+
+WebSocket 接口提供实时双向通信，适用于：
+
+- **设备端**：持久连接实时上报电量数据
+- **用户端**：订阅设备数据，接收实时推送
+
+**连接端点**：
+```
+ws://<host>/ws
+wss://<host>/ws  (TLS)
+```
+
+### 连接流程
+
+```mermaid
+sequenceDiagram
+    participant C as 客户端
+    participant S as 服务器
+    
+    C->>S: WebSocket 握手
+    S->>C: Connected (auth_timeout: 30s)
+    C->>S: Auth (token)
+    S->>C: AuthResult (success/failed)
+    
+    loop 已认证
+        C->>S: BatteryReport / Ping
+        S->>C: BatteryReportResult / Pong
+    end
+```
+
+### 认证
+
+连接建立后，客户端需在 30 秒内发送认证消息，否则连接将被关闭。
+
+**设备认证**：
+```json
+{
+  "type": "auth",
+  "token": "<device_access_token>",
+  "auth_type": "device_token"
+}
+```
+
+**用户认证（JWT）**：
+```json
+{
+  "type": "auth",
+  "token": "<jwt_access_token>",
+  "auth_type": "jwt"
+}
+```
+
+**认证成功响应**：
+```json
+{
+  "type": "auth_result",
+  "success": true,
+  "message": "认证成功",
+  "device_id": "550e8400-e29b-41d4-a716-446655440000"
+}
+```
+
+**认证失败响应**：
+```json
+{
+  "type": "auth_result",
+  "success": false,
+  "message": "令牌无效或已过期"
+}
+```
+
+---
+
+### 消息类型
+
+#### 客户端消息
+
+| 类型 | 描述 | 权限 |
+|------|------|------|
+| `auth` | 认证消息 | 所有 |
+| `battery_report` | 上报电量数据 | 设备 |
+| `batch_battery_report` | 批量上报电量 | 设备 |
+| `ping` | 心跳 | 所有 |
+| `subscribe` | 订阅设备数据 | 用户 |
+| `unsubscribe` | 取消订阅 | 用户 |
+
+#### 服务器消息
+
+| 类型 | 描述 |
+|------|------|
+| `connected` | 连接成功 |
+| `auth_result` | 认证结果 |
+| `battery_report_result` | 上报结果 |
+| `batch_battery_report_result` | 批量上报结果 |
+| `pong` | 心跳响应 |
+| `subscribe_result` | 订阅结果 |
+| `battery_push` | 电量数据推送 |
+| `alert_push` | 预警推送 |
+| `error` | 错误消息 |
+
+---
+
+### 电量上报（设备）
+
+**请求**：
+```json
+{
+  "type": "battery_report",
+  "battery_level": 75,
+  "is_charging": false,
+  "power_saving_mode": "off",
+  "temperature": 25.5,
+  "voltage": 3.8,
+  "recorded_at": "2026-01-13T10:30:00Z",
+  "msg_id": "req-001"
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| `battery_level` | number | ✅ | 电量值 (0-100) |
+| `is_charging` | boolean | ❌ | 是否充电（默认 false） |
+| `power_saving_mode` | string | ❌ | 省电模式 |
+| `temperature` | number | ❌ | 温度（摄氏度） |
+| `voltage` | number | ❌ | 电压（伏特） |
+| `recorded_at` | string | ❌ | 记录时间（默认服务器时间） |
+| `msg_id` | string | ❌ | 消息 ID（用于追踪） |
+
+**成功响应**：
+```json
+{
+  "type": "battery_report_result",
+  "success": true,
+  "data": {
+    "id": "550e8400-e29b-41d4-a716-446655440000",
+    "device_id": "550e8400-e29b-41d4-a716-446655440001",
+    "battery_level": 75,
+    "is_charging": false,
+    "power_saving_mode": "off",
+    "temperature": 25.5,
+    "voltage": 3.8,
+    "recorded_at": "2026-01-13T10:30:00Z",
+    "created_at": "2026-01-13T10:30:01Z"
+  },
+  "msg_id": "req-001"
+}
+```
+
+**失败响应**：
+```json
+{
+  "type": "battery_report_result",
+  "success": false,
+  "error": "电量值必须在 0-100 之间",
+  "msg_id": "req-001"
+}
+```
+
+---
+
+### 批量上报（设备）
+
+**请求**：
+```json
+{
+  "type": "batch_battery_report",
+  "data": [
+    {
+      "battery_level": 80,
+      "is_charging": true,
+      "recorded_at": "2026-01-13T10:00:00Z"
+    },
+    {
+      "battery_level": 75,
+      "is_charging": false,
+      "recorded_at": "2026-01-13T10:30:00Z"
+    }
+  ],
+  "msg_id": "batch-001"
+}
+```
+
+**响应**：
+```json
+{
+  "type": "batch_battery_report_result",
+  "success": true,
+  "inserted_count": 2,
+  "msg_id": "batch-001"
+}
+```
+
+---
+
+### 订阅设备数据（用户）
+
+用户可以订阅一个或多个设备的实时数据推送。
+
+**订阅请求**：
+```json
+{
+  "type": "subscribe",
+  "device_ids": [
+    "550e8400-e29b-41d4-a716-446655440000",
+    "550e8400-e29b-41d4-a716-446655440001"
+  ]
+}
+```
+
+**订阅响应**：
+```json
+{
+  "type": "subscribe_result",
+  "success": true,
+  "subscribed_devices": [
+    "550e8400-e29b-41d4-a716-446655440000",
+    "550e8400-e29b-41d4-a716-446655440001"
+  ]
+}
+```
+
+**取消订阅**：
+```json
+{
+  "type": "unsubscribe",
+  "device_ids": ["550e8400-e29b-41d4-a716-446655440000"]
+}
+```
+
+---
+
+### 数据推送
+
+当订阅的设备上报新数据时，用户会收到推送：
+
+```json
+{
+  "type": "battery_push",
+  "device_id": "550e8400-e29b-41d4-a716-446655440000",
+  "data": {
+    "device_id": "550e8400-e29b-41d4-a716-446655440000",
+    "battery_level": 75,
+    "is_charging": false,
+    "power_saving_mode": "off",
+    "recorded_at": "2026-01-13T10:30:00Z",
+    "is_low_battery": false,
+    "is_critical": false
+  }
+}
+```
+
+### 预警推送
+
+```json
+{
+  "type": "alert_push",
+  "device_id": "550e8400-e29b-41d4-a716-446655440000",
+  "alert_type": "low_battery",
+  "message": "设备电量过低 (15%)",
+  "severity": "warning",
+  "timestamp": "2026-01-13T10:30:00Z"
+}
+```
+
+---
+
+### 心跳
+
+保持连接活跃：
+
+**请求**：
+```json
+{
+  "type": "ping"
+}
+```
+
+**响应**：
+```json
+{
+  "type": "pong"
+}
+```
+
+---
+
+### 错误消息
+
+```json
+{
+  "type": "error",
+  "code": "UNAUTHORIZED",
+  "message": "请先完成认证"
+}
+```
+
+**常见错误码**：
+
+| 错误码 | 描述 |
+|--------|------|
+| `INVALID_MESSAGE` | 消息格式错误 |
+| `UNAUTHORIZED` | 未认证 |
+| `AUTH_TIMEOUT` | 认证超时 |
+| `FORBIDDEN` | 无权限执行此操作 |
+| `VALIDATION_ERROR` | 数据验证失败 |
+| `INTERNAL_ERROR` | 服务器内部错误 |
+
+---
+
+### WebSocket TypeScript 类型定义
+
+```typescript
+// 客户端消息类型
+type ClientMessage = 
+  | { type: 'auth'; token: string; auth_type?: 'device_token' | 'jwt' }
+  | { type: 'battery_report'; battery_level: number; is_charging?: boolean; power_saving_mode?: string; temperature?: number; voltage?: number; recorded_at?: string; msg_id?: string }
+  | { type: 'batch_battery_report'; data: BatteryReportData[]; msg_id?: string }
+  | { type: 'ping' }
+  | { type: 'subscribe'; device_ids: string[] }
+  | { type: 'unsubscribe'; device_ids?: string[] };
+
+// 服务器消息类型
+type ServerMessage =
+  | { type: 'connected'; message: string; server_time: string; auth_timeout: number }
+  | { type: 'auth_result'; success: boolean; message: string; device_id?: string; user_id?: string }
+  | { type: 'battery_report_result'; success: boolean; data?: BatteryData; error?: string; msg_id?: string }
+  | { type: 'batch_battery_report_result'; success: boolean; inserted_count?: number; error?: string; msg_id?: string }
+  | { type: 'pong' }
+  | { type: 'subscribe_result'; success: boolean; subscribed_devices: string[]; error?: string }
+  | { type: 'battery_push'; device_id: string; data: LatestBatteryResponse }
+  | { type: 'alert_push'; device_id: string; alert_type: string; message: string; severity: string; timestamp: string }
+  | { type: 'error'; code: string; message: string };
+
+interface BatteryReportData {
+  battery_level: number;
+  is_charging?: boolean;
+  power_saving_mode?: string;
+  temperature?: number;
+  voltage?: number;
+  recorded_at?: string;
+}
+```
+
+---
+
+### 使用示例
+
+#### JavaScript/TypeScript 客户端
+
+```typescript
+// 设备连接示例
+const ws = new WebSocket('wss://api.example.com/ws');
+
+ws.onopen = () => {
+  // 发送认证
+  ws.send(JSON.stringify({
+    type: 'auth',
+    token: 'your-device-token',
+    auth_type: 'device_token'
+  }));
+};
+
+ws.onmessage = (event) => {
+  const msg = JSON.parse(event.data);
+  
+  switch (msg.type) {
+    case 'auth_result':
+      if (msg.success) {
+        console.log('认证成功');
+        // 开始上报
+        reportBattery();
+      } else {
+        console.error('认证失败:', msg.message);
+      }
+      break;
+    case 'battery_report_result':
+      if (msg.success) {
+        console.log('上报成功:', msg.data);
+      } else {
+        console.error('上报失败:', msg.error);
+      }
+      break;
+  }
+};
+
+function reportBattery() {
+  ws.send(JSON.stringify({
+    type: 'battery_report',
+    battery_level: 75,
+    is_charging: false,
+    temperature: 25.5
+  }));
+}
+
+// 心跳保活
+setInterval(() => {
+  if (ws.readyState === WebSocket.OPEN) {
+    ws.send(JSON.stringify({ type: 'ping' }));
+  }
+}, 30000);
+```
+
+#### Rust 客户端
+
+```rust
+use tokio_tungstenite::connect_async;
+use futures_util::{SinkExt, StreamExt};
+
+#[tokio::main]
+async fn main() {
+    let (ws_stream, _) = connect_async("wss://api.example.com/ws")
+        .await
+        .expect("连接失败");
+
+    let (mut write, mut read) = ws_stream.split();
+
+    // 发送认证
+    let auth_msg = r#"{"type":"auth","token":"your-token","auth_type":"device_token"}"#;
+    write.send(auth_msg.into()).await.unwrap();
+
+    // 处理消息
+    while let Some(msg) = read.next().await {
+        if let Ok(msg) = msg {
+            println!("收到: {}", msg);
+        }
+    }
+}
+```
