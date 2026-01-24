@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import {
   Card,
   Descriptions,
@@ -55,19 +55,7 @@ export const DeviceDetailPage: React.FC = () => {
   ])
   const [interval, setInterval] = useState<AggregationInterval>('hour')
 
-  useEffect(() => {
-    if (id) {
-      loadDeviceData()
-    }
-  }, [id])
-
-  useEffect(() => {
-    if (id) {
-      loadChartData()
-    }
-  }, [id, dateRange, interval])
-
-  const loadDeviceData = async () => {
+  const loadDeviceData = useCallback(async () => {
     if (!id) return
     setLoading(true)
     try {
@@ -77,15 +65,15 @@ export const DeviceDetailPage: React.FC = () => {
       ])
       setDevice(deviceData)
       setLatestBattery(batteryData)
-    } catch (error) {
+    } catch {
       message.error('加载设备数据失败')
       navigate('/devices')
     } finally {
       setLoading(false)
     }
-  }
+  }, [id, navigate])
 
-  const loadChartData = async () => {
+  const loadChartData = useCallback(async () => {
     if (!id) return
     setChartLoading(true)
     try {
@@ -107,7 +95,19 @@ export const DeviceDetailPage: React.FC = () => {
     } finally {
       setChartLoading(false)
     }
-  }
+  }, [id, dateRange, interval])
+
+  useEffect(() => {
+    if (id) {
+      loadDeviceData()
+    }
+  }, [id, loadDeviceData])
+
+  useEffect(() => {
+    if (id) {
+      loadChartData()
+    }
+  }, [id, loadChartData])
 
   const handleDelete = async () => {
     if (!id) return
@@ -116,7 +116,7 @@ export const DeviceDetailPage: React.FC = () => {
       await devicesApi.deleteDevice(id)
       message.success('设备已删除')
       navigate('/devices')
-    } catch (error) {
+    } catch {
       message.error('删除设备失败')
     } finally {
       setDeleteLoading(false)

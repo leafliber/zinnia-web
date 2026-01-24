@@ -32,7 +32,7 @@ export const SecurityPage: React.FC = () => {
       setTimeout(() => {
         logout()
       }, 1500)
-    } catch (error) {
+    } catch {
       message.error('修改密码失败，请检查当前密码是否正确')
     } finally {
       setChangingPassword(false)
@@ -44,7 +44,7 @@ export const SecurityPage: React.FC = () => {
     try {
       const result = await authApi.logoutAll()
       message.success(`已登出 ${result.sessions_revoked} 个设备`)
-    } catch (error) {
+    } catch {
       message.error('操作失败，请稍后重试')
     } finally {
       setLoggingOutAll(false)

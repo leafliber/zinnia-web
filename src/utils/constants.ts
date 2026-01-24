@@ -59,3 +59,45 @@ export const PAGE_SIZE_OPTIONS = [10, 20, 50, 100]
 export const DATE_FORMAT = 'YYYY-MM-DD'
 export const TIME_FORMAT = 'HH:mm:ss'
 export const DATETIME_FORMAT = 'YYYY-MM-DD HH:mm:ss'
+
+// ==================== 验证码相关 ====================
+// 验证码长度
+export const VERIFICATION_CODE_LENGTH = 6
+
+// 验证码倒计时（秒）
+export const VERIFICATION_CODE_COUNTDOWN = 60
+
+// 验证码有效期（描述用）
+export const VERIFICATION_CODE_VALIDITY_DESC = '10分钟'
+
+// 验证码错误提示
+export const VERIFICATION_CODE_INCOMPLETE_MSG = '请输入完整的6位验证码'
+
+// ==================== UI 反馈相关 ====================
+// 进度条持续时间（毫秒）
+export const PROGRESS_BAR_DURATION = 3000
+
+// 进度条更新间隔（毫秒）
+export const PROGRESS_BAR_UPDATE_INTERVAL = 100
+
+// ==================== 设备令牌相关 ====================
+// 令牌有效期最大值（小时）- 8760 小时 ≈ 1 年
+export const TOKEN_MAX_EXPIRY_HOURS = 8760
+
+// 速率限制最大值（次/分钟）
+export const TOKEN_MAX_RATE_LIMIT = 1000
+
+// 速率限制最小值（次/分钟）
+export const TOKEN_MIN_RATE_LIMIT = 1
+
+// ==================== 电量相关 ====================
+// 低电量阈值（%）
+export const BATTERY_LOW_THRESHOLD = 20
+
+// 严重电量阈值（%）
+export const BATTERY_CRITICAL_THRESHOLD = 10
+
+// ==================== 图表相关 ====================
+// 设备列表显示数量限制
+export const DEVICE_LIST_DISPLAY_LIMIT = 10
+export const DASHBOARD_DEVICE_DISPLAY_LIMIT = 8

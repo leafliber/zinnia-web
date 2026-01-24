@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import {
   Card,
   Form,
@@ -28,25 +28,25 @@ export const DeviceConfigPage: React.FC = () => {
   const [rotating, setRotating] = useState(false)
   const [newApiKey, setNewApiKey] = useState<RotateKeyResponse | null>(null)
 
-  useEffect(() => {
-    if (id) {
-      loadConfig()
-    }
-  }, [id])
-
-  const loadConfig = async () => {
+  const loadConfig = useCallback(async () => {
     if (!id) return
     setLoading(true)
     try {
       const data = await devicesApi.getDeviceConfig(id)
       setConfig(data)
       form.setFieldsValue(data)
-    } catch (error) {
+    } catch {
       message.error('加载配置失败')
     } finally {
       setLoading(false)
     }
-  }
+  }, [id, form])
+
+  useEffect(() => {
+    if (id) {
+      loadConfig()
+    }
+  }, [id, loadConfig])
 
   const handleSave = async (values: UpdateDeviceConfigRequest) => {
     if (!id) return
@@ -55,7 +55,7 @@ export const DeviceConfigPage: React.FC = () => {
       const updated = await devicesApi.updateDeviceConfig(id, values)
       setConfig(updated)
       message.success('配置已保存')
-    } catch (error) {
+    } catch {
       message.error('保存配置失败')
     } finally {
       setSaving(false)
@@ -69,7 +69,7 @@ export const DeviceConfigPage: React.FC = () => {
       const response = await devicesApi.rotateDeviceKey(id)
       setNewApiKey(response)
       message.success('API Key 已轮换')
-    } catch (error) {
+    } catch {
       message.error('轮换密钥失败')
     } finally {
       setRotating(false)

@@ -42,7 +42,7 @@ export const AlertRulesPage: React.FC = () => {
     try {
       const data = await alertsApi.getAlertRules()
       setRules(data)
-    } catch (error) {
+    } catch {
       message.error('加载预警规则失败')
     } finally {
       setLoading(false)
@@ -78,7 +78,7 @@ export const AlertRulesPage: React.FC = () => {
       setModalOpen(false)
       form.resetFields()
       loadRules()
-    } catch (error) {
+    } catch {
       message.error(editing ? '更新规则失败' : '创建规则失败')
     } finally {
       setSaving(false)
@@ -90,7 +90,7 @@ export const AlertRulesPage: React.FC = () => {
       await alertsApi.deleteAlertRule(id)
       message.success('规则已删除')
       loadRules()
-    } catch (error) {
+    } catch {
       message.error('删除规则失败')
     }
   }
@@ -100,7 +100,7 @@ export const AlertRulesPage: React.FC = () => {
       await alertsApi.updateAlertRule(rule.id, { enabled: !rule.enabled })
       message.success(rule.enabled ? '规则已禁用' : '规则已启用')
       loadRules()
-    } catch (error) {
+    } catch {
       message.error('操作失败')
     }
   }

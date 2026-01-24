@@ -109,18 +109,3 @@ export const ReCaptcha: React.FC<ReCaptchaProps> = ({
 
   return <div ref={containerRef} style={{ display: 'flex', justifyContent: 'center' }} />
 }
-
-// 重置 reCAPTCHA 的 hook
-export const useReCaptchaReset = () => {
-  const reset = useCallback((widgetId?: number) => {
-    if (window.grecaptcha) {
-      try {
-        window.grecaptcha.reset(widgetId)
-      } catch {
-        // 忽略错误
-      }
-    }
-  }, [])
-
-  return reset
-}

@@ -15,6 +15,7 @@ import { alertsApi, batteryApi } from '@/api'
 import { LoadingSpinner } from '@/components'
 import { DEVICE_STATUS_COLORS, DEVICE_STATUS_TEXT, formatRelativeTime, getBatteryColor } from '@/utils'
 import type { AlertEvent, LatestBattery } from '@/types'
+import { DEVICE_LIST_DISPLAY_LIMIT, DASHBOARD_DEVICE_DISPLAY_LIMIT, BATTERY_LOW_THRESHOLD } from '@/utils/constants'
 
 const { Title, Text } = Typography
 
@@ -28,13 +29,14 @@ export const DashboardPage: React.FC = () => {
   useEffect(() => {
     fetchDevices()
     loadAlerts()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   useEffect(() => {
     // 加载各设备的电量数据
     const loadBatteryData = async () => {
       const data: Record<string, LatestBattery> = {}
-      for (const device of devices.slice(0, 10)) {
+      for (const device of devices.slice(0, DEVICE_LIST_DISPLAY_LIMIT)) {
         try {
           const battery = await batteryApi.getLatestBattery(device.id)
           data[device.id] = battery
@@ -71,7 +73,7 @@ export const DashboardPage: React.FC = () => {
   const alertCount = alerts.length
   const lowBatteryDevices = devices.filter((d) => {
     const battery = batteryData[d.id]
-    return battery && battery.battery_level < 20
+    return battery && battery.battery_level < BATTERY_LOW_THRESHOLD
   })
 
   if (isLoading) {
@@ -254,7 +256,7 @@ export const DashboardPage: React.FC = () => {
         ) : (
           <List
             grid={{ gutter: 16, xs: 1, sm: 2, md: 3, lg: 4, xl: 4 }}
-            dataSource={devices.slice(0, 8)}
+            dataSource={devices.slice(0, DASHBOARD_DEVICE_DISPLAY_LIMIT)}
             renderItem={(device) => {
               const battery = batteryData[device.id]
               return (

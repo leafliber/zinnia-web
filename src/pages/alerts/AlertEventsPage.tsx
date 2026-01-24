@@ -28,6 +28,7 @@ export const AlertEventsPage: React.FC = () => {
 
   useEffect(() => {
     loadEvents()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [filters, pagination.page, pagination.page_size])
 
   const loadEvents = async () => {
@@ -43,7 +44,7 @@ export const AlertEventsPage: React.FC = () => {
         ...prev,
         total: response.pagination.total_items,
       }))
-    } catch (error) {
+    } catch {
       message.error('加载预警事件失败')
     } finally {
       setLoading(false)
@@ -55,7 +56,7 @@ export const AlertEventsPage: React.FC = () => {
       await alertsApi.acknowledgeAlert(id)
       message.success('预警已确认')
       loadEvents()
-    } catch (error) {
+    } catch {
       message.error('操作失败')
     }
   }
@@ -65,7 +66,7 @@ export const AlertEventsPage: React.FC = () => {
       await alertsApi.resolveAlert(id)
       message.success('预警已解决')
       loadEvents()
-    } catch (error) {
+    } catch {
       message.error('操作失败')
     }
   }

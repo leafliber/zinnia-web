@@ -1,4 +1,4 @@
-import apiClient, { setTokens, clearTokens } from './client'
+import apiClient from './client'
 import type {
   ApiResponse,
   User,
@@ -21,28 +21,31 @@ export const register = async (data: RegisterRequest): Promise<User> => {
 }
 
 // 用户登录
+// 使用 httpOnly cookie，token 会自动由后端设置
 export const login = async (data: LoginRequest): Promise<LoginResponse> => {
   const response = await apiClient.post<ApiResponse<LoginResponse>>('/users/login', data)
   const result = response.data.data!
-  // 保存 token
-  setTokens(result.access_token, result.refresh_token)
+  // Cookie 会自动设置，无需手动处理
   return result
 }
 
 // 刷新令牌
-export const refreshToken = async (data: RefreshTokenRequest): Promise<LoginResponse> => {
-  const response = await apiClient.post<ApiResponse<LoginResponse>>('/users/refresh', data)
+// 使用 httpOnly cookie，refresh_token 在 cookie 中，不需要在 body 中传递
+export const refreshToken = async (_data: RefreshTokenRequest): Promise<LoginResponse> => {
+  const response = await apiClient.post<ApiResponse<LoginResponse>>('/users/refresh', {})
   const result = response.data.data!
-  setTokens(result.access_token, result.refresh_token)
+  // 新的 cookie 会自动设置，无需手动处理
   return result
 }
 
 // 用户登出
-export const logout = async (refreshToken: string): Promise<void> => {
+// 使用 httpOnly cookie，不需要传递 refresh_token
+export const logout = async (): Promise<void> => {
   try {
-    await apiClient.post('/users/logout', { refresh_token: refreshToken })
-  } finally {
-    clearTokens()
+    await apiClient.post('/users/logout', {})
+    // Cookie 会由服务器自动清除
+  } catch {
+    // 忽略登出错误，cookie 可能已过期
   }
 }
 

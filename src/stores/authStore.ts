@@ -1,7 +1,7 @@
 import { create } from 'zustand'
 import { persist } from 'zustand/middleware'
 import type { User } from '@/types'
-import { authApi, getRefreshToken, clearTokens } from '@/api'
+import { authApi } from '@/api'
 
 interface AuthState {
   // 状态
@@ -60,15 +60,12 @@ export const useAuthStore = create<AuthState>()(
       },
 
       logout: async () => {
-        const refreshToken = getRefreshToken()
         try {
-          if (refreshToken) {
-            await authApi.logout(refreshToken)
-          }
+          await authApi.logout()
+          // Cookie 会由服务器自动清除
         } catch {
-          // 忽略登出错误
+          // 忽略登出错误，cookie 可能已过期
         } finally {
-          clearTokens()
           set({ user: null, isAuthenticated: false })
         }
       },
@@ -83,7 +80,7 @@ export const useAuthStore = create<AuthState>()(
           set({ user, isLoading: false })
         } catch {
           // 如果获取用户失败，清除认证状态
-          clearTokens()
+          // Cookie 可能已过期，服务器会返回 401
           set({ user: null, isAuthenticated: false, isLoading: false })
         }
       },

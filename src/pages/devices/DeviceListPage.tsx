@@ -32,7 +32,7 @@ export const DeviceListPage: React.FC = () => {
 
   useEffect(() => {
     fetchDevices()
-  }, [])
+  }, [fetchDevices])
 
   useEffect(() => {
     // 加载各设备的电量数据

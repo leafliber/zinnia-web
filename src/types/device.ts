@@ -87,6 +87,23 @@ export interface DeviceToken {
   created_at: string
 }
 
+// 主 API 密钥表格行（虚拟行）
+export interface MainApiKeyRow {
+  id: 'main-api-key'
+  name: '主 API Key'
+  token_prefix: string
+  permission: TokenPermission
+  is_revoked: false
+  expires_at: null
+  last_used_at: null
+  use_count?: never
+  created_at: string
+  isMain: true
+}
+
+// 令牌表格行的联合类型（设备令牌或主密钥）
+export type TokenTableRow = DeviceToken | MainApiKeyRow
+
 // 设备列表查询参数
 export interface DeviceListParams {
   page?: number

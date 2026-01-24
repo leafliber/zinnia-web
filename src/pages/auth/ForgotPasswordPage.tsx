@@ -5,6 +5,11 @@ import { Link, useNavigate } from 'react-router-dom'
 import { securityApi } from '@/api'
 import { ReCaptcha } from '@/components'
 import type { RegistrationConfig } from '@/types'
+import {
+  VERIFICATION_CODE_LENGTH,
+  VERIFICATION_CODE_COUNTDOWN,
+  VERIFICATION_CODE_VALIDITY_DESC,
+} from '@/utils/constants'
 
 const { Title, Text } = Typography
 
@@ -88,7 +93,7 @@ export const ForgotPasswordPage: React.FC = () => {
         recaptcha_token: recaptchaToken,
       })
       message.success('验证码已发送到您的邮箱')
-      setCountdown(60)
+      setCountdown(VERIFICATION_CODE_COUNTDOWN)
       setCurrentStep(1)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '发送验证码失败'
@@ -109,7 +114,7 @@ export const ForgotPasswordPage: React.FC = () => {
         recaptcha_token: recaptchaToken,
       })
       message.success('验证码已重新发送')
-      setCountdown(60)
+      setCountdown(VERIFICATION_CODE_COUNTDOWN)
     } catch (error) {
       const errorMessage = error instanceof Error ? error.message : '发送验证码失败'
       message.error(errorMessage)
@@ -120,7 +125,7 @@ export const ForgotPasswordPage: React.FC = () => {
 
   // 步骤2：验证验证码并进入下一步
   const handleVerifyCode = () => {
-    if (!verificationCode || verificationCode.length !== 6) {
+    if (!verificationCode || verificationCode.length !== VERIFICATION_CODE_LENGTH) {
       message.error('请输入完整的6位验证码')
       return
     }
@@ -202,12 +207,12 @@ export const ForgotPasswordPage: React.FC = () => {
             </Text>
 
             <Form layout="vertical">
-              <Form.Item label="验证码" required extra="验证码有效期为10分钟">
+              <Form.Item label="验证码" required extra={`验证码有效期为${VERIFICATION_CODE_VALIDITY_DESC}`}>
                 <Input
                   prefix={<SafetyOutlined />}
                   placeholder="请输入6位验证码"
                   size="large"
-                  maxLength={6}
+                  maxLength={VERIFICATION_CODE_LENGTH}
                   value={verificationCode}
                   onChange={(e) => setVerificationCode(e.target.value.replace(/\D/g, ''))}
                 />

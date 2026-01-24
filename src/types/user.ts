@@ -40,8 +40,9 @@ export interface LoginResponse {
 }
 
 // 刷新令牌请求
+// 使用 httpOnly cookie 时，refresh_token 从 cookie 中读取，不需要在 body 中传递
 export interface RefreshTokenRequest {
-  refresh_token: string
+  refresh_token?: string
 }
 
 // 修改密码请求

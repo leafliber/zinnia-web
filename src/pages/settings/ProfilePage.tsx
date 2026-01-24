@@ -27,7 +27,7 @@ export const ProfilePage: React.FC = () => {
       const updated = await authApi.updateCurrentUser(values)
       updateUser(updated)
       message.success('个人资料已更新')
-    } catch (error) {
+    } catch {
       message.error('更新失败，请稍后重试')
     } finally {
       setLoading(false)

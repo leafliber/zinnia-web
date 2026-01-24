@@ -2,88 +2,81 @@ import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios'
 import { ApiResponse } from '@/types'
 
 // 创建 axios 实例
+// withCredentials: true - 关键配置，用于发送/接收 httpOnly cookie
 const apiClient = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || '/api/v1',
   timeout: 30000,
+  withCredentials: true, // 启用 cookie 支持
   headers: {
     'Content-Type': 'application/json',
   },
 })
 
-// 存储 token 的 key
-const ACCESS_TOKEN_KEY = 'zinnia_access_token'
-const REFRESH_TOKEN_KEY = 'zinnia_refresh_token'
+// 使用 httpOnly cookie 存储 token，不再需要 localStorage 存储
+// 保留这些方法用于向后兼容，但实际不再使用
 
-// 获取 token
+// 获取 token (已废弃，保留用于向后兼容)
 export const getAccessToken = (): string | null => {
-  return localStorage.getItem(ACCESS_TOKEN_KEY)
+  // httpOnly cookie 无法通过 JavaScript 读取，返回 null
+  return null
 }
 
 export const getRefreshToken = (): string | null => {
-  return localStorage.getItem(REFRESH_TOKEN_KEY)
+  // httpOnly cookie 无法通过 JavaScript 读取，返回 null
+  return null
 }
 
-// 设置 token
-export const setTokens = (accessToken: string, refreshToken: string): void => {
-  localStorage.setItem(ACCESS_TOKEN_KEY, accessToken)
-  localStorage.setItem(REFRESH_TOKEN_KEY, refreshToken)
+// 设置 token (已废弃，保留用于向后兼容)
+export const setTokens = (_accessToken: string, _refreshToken: string): void => {
+  // token 现在存储在 httpOnly cookie 中，不再需要手动设置
 }
 
-// 清除 token
+// 清除 token (已废弃，保留用于向后兼容)
 export const clearTokens = (): void => {
-  localStorage.removeItem(ACCESS_TOKEN_KEY)
-  localStorage.removeItem(REFRESH_TOKEN_KEY)
+  // token 现在由服务器通过 httpOnly cookie 管理，无法手动清除
+  // 登出时会调用后端 /users/logout 接口来清除 cookie
 }
 
 // 是否正在刷新 token
 let isRefreshing = false
 // 等待刷新完成的请求队列
-let refreshSubscribers: ((token: string) => void)[] = []
+let refreshSubscribers: ((success: boolean) => void)[] = []
 
 // 添加到刷新等待队列
-const subscribeTokenRefresh = (callback: (token: string) => void) => {
+const subscribeTokenRefresh = (callback: (success: boolean) => void) => {
   refreshSubscribers.push(callback)
 }
 
 // 通知所有等待的请求
-const onTokenRefreshed = (newToken: string) => {
-  refreshSubscribers.forEach((callback) => callback(newToken))
+const onTokenRefreshed = (success: boolean) => {
+  refreshSubscribers.forEach((callback) => callback(success))
   refreshSubscribers = []
 }
 
 // 刷新 token
-const refreshAccessToken = async (): Promise<string | null> => {
-  const refreshToken = getRefreshToken()
-  if (!refreshToken) {
-    return null
-  }
-
+// 使用 httpOnly cookie，不需要传递 refresh_token
+const refreshAccessToken = async (): Promise<boolean> => {
   try {
-    const response = await axios.post<ApiResponse<{ access_token: string; refresh_token: string }>>(
+    await axios.post<ApiResponse<{ access_token: string; refresh_token: string }>>(
       `${import.meta.env.VITE_API_BASE_URL || '/api/v1'}/users/refresh`,
-      { refresh_token: refreshToken },
-      { headers: { 'Content-Type': 'application/json' } }
+      {}, // 不需要 request body，refresh_token 在 cookie 中
+      { withCredentials: true } // 确保携带 cookie
     )
 
-    if (response.data.data) {
-      const { access_token, refresh_token } = response.data.data
-      setTokens(access_token, refresh_token)
-      return access_token
-    }
-    return null
+    // 新的 cookie 会自动设置，不需要手动存储
+    return true
   } catch {
-    clearTokens()
-    return null
+    // 刷新失败，cookie 可能会被后端清除
+    return false
   }
 }
 
 // 请求拦截器
+// 使用 httpOnly cookie 认证后，不再需要手动添加 Authorization header
+// cookie 会自动由浏览器发送
 apiClient.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    const token = getAccessToken()
-    if (token && config.headers) {
-      config.headers.Authorization = `Bearer ${token}`
-    }
+    // 不再需要添加 Authorization header
     return config
   },
   (error) => {
@@ -143,12 +136,13 @@ apiClient.interceptors.response.use(
     ) {
       if (isRefreshing) {
         // 如果正在刷新，加入等待队列
-        return new Promise((resolve) => {
-          subscribeTokenRefresh((newToken: string) => {
-            if (originalRequest.headers) {
-              originalRequest.headers.Authorization = `Bearer ${newToken}`
+        return new Promise((resolve, reject) => {
+          subscribeTokenRefresh((success: boolean) => {
+            if (success) {
+              resolve(apiClient(originalRequest))
+            } else {
+              reject(error)
             }
-            resolve(apiClient(originalRequest))
           })
         })
       }
@@ -157,21 +151,19 @@ apiClient.interceptors.response.use(
       isRefreshing = true
 
       try {
-        const newToken = await refreshAccessToken()
-        if (newToken) {
-          onTokenRefreshed(newToken)
-          if (originalRequest.headers) {
-            originalRequest.headers.Authorization = `Bearer ${newToken}`
-          }
+        const success = await refreshAccessToken()
+        if (success) {
+          // 刷新成功，通知所有等待的请求
+          onTokenRefreshed(true)
           return apiClient(originalRequest)
         } else {
           // 刷新失败，跳转登录页
-          clearTokens()
+          onTokenRefreshed(false)
           window.location.href = '/login'
           return Promise.reject(error)
         }
       } catch (refreshError) {
-        clearTokens()
+        onTokenRefreshed(false)
         window.location.href = '/login'
         return Promise.reject(refreshError)
       } finally {

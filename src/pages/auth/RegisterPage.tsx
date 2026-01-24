@@ -5,6 +5,13 @@ import { Link, useNavigate } from 'react-router-dom'
 import { securityApi, authApi } from '@/api'
 import { ReCaptcha, EmailVerification } from '@/components'
 import type { RegistrationConfig } from '@/types'
+import {
+  VERIFICATION_CODE_LENGTH,
+  VERIFICATION_CODE_VALIDITY_DESC,
+  VERIFICATION_CODE_INCOMPLETE_MSG,
+  PROGRESS_BAR_DURATION,
+  PROGRESS_BAR_UPDATE_INTERVAL,
+} from '@/utils/constants'
 
 const { Title, Text } = Typography
 
@@ -85,8 +92,8 @@ export const RegisterPage: React.FC = () => {
       return
     }
 
-    if (verificationCode && verificationCode.length !== 6) {
-      message.error('请输入完整的6位验证码')
+    if (verificationCode && verificationCode.length !== VERIFICATION_CODE_LENGTH) {
+      message.error(VERIFICATION_CODE_INCOMPLETE_MSG)
       return
     }
 
@@ -101,14 +108,17 @@ export const RegisterPage: React.FC = () => {
       })
       message.success('注册成功，请登录')
       navigate('/login')
-    } catch (error: any) {
+    } catch (error) {
       // 解析后端返回的错误信息
       let errorMessage = '注册失败，请稍后重试'
-      
-      if (error?.response?.data) {
-        const data = error.response.data
-        // 优先使用 message 字段，其次使用 details 字段
-        errorMessage = data.message || data.details || errorMessage
+
+      if (error && typeof error === 'object' && 'response' in error) {
+        const err = error as { response?: { data?: { message?: string; details?: string } } }
+        if (err.response?.data) {
+          const data = err.response.data
+          // 优先使用 message 字段，其次使用 details 字段
+          errorMessage = data.message || data.details || errorMessage
+        }
       } else if (error instanceof Error) {
         errorMessage = error.message
       }
@@ -127,7 +137,7 @@ export const RegisterPage: React.FC = () => {
       setRegisterError(errorMessage)
       setRegisterErrorProgress(100)
       const start = Date.now()
-      const duration = 3000
+      const duration = PROGRESS_BAR_DURATION
       registerErrorInterval.current = window.setInterval(() => {
         const elapsed = Date.now() - start
         const percent = Math.max(0, 100 - (elapsed / duration) * 100)
@@ -136,7 +146,7 @@ export const RegisterPage: React.FC = () => {
           window.clearInterval(registerErrorInterval.current)
           registerErrorInterval.current = null
         }
-      }, 100)
+      }, PROGRESS_BAR_UPDATE_INTERVAL)
 
       registerErrorTimer.current = window.setTimeout(() => {
         if (registerErrorInterval.current) {
@@ -311,7 +321,7 @@ export const RegisterPage: React.FC = () => {
             <Form.Item
               label="邮箱验证码"
               required
-              extra="验证码有效期为10分钟"
+              extra={`验证码有效期为${VERIFICATION_CODE_VALIDITY_DESC}`}
             >
               <EmailVerification
                 email={emailValue}

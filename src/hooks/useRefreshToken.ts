@@ -1,12 +1,12 @@
 import { useEffect, useRef } from 'react'
 import { useAuthStore } from '@/stores'
-import { getAccessToken, getRefreshToken } from '@/api'
 import { authApi } from '@/api'
 import { TOKEN_REFRESH_INTERVAL } from '@/utils/constants'
 
 /**
  * Token 自动刷新 Hook
  * 在 access_token 过期前自动刷新
+ * 使用 httpOnly cookie 时，我们定期调用刷新接口来保持 cookie 有效
  */
 export const useRefreshToken = () => {
   const { isAuthenticated, logout } = useAuthStore()
@@ -24,16 +24,9 @@ export const useRefreshToken = () => {
 
     // 定时刷新 token
     const refreshAccessToken = async () => {
-      const accessToken = getAccessToken()
-      const refreshToken = getRefreshToken()
-
-      if (!accessToken || !refreshToken) {
-        logout()
-        return
-      }
-
       try {
-        await authApi.refreshToken({ refresh_token: refreshToken })
+        // 调用刷新接口，refresh_token 在 httpOnly cookie 中
+        await authApi.refreshToken({})
       } catch {
         // 刷新失败，登出用户
         logout()

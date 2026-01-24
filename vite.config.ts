@@ -18,7 +18,8 @@ export default defineConfig(({ mode }) => ({
     port: 3000,
     proxy: {
       '/api': {
-        target: 'http://localhost:8080',
+        // 使用环境变量配置后端地址，避免硬编码
+        target: process.env.VITE_DEV_API_TARGET || 'http://localhost:8080',
         changeOrigin: true,
       },
     },

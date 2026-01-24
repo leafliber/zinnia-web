@@ -1,50 +1,28 @@
-import React, { lazy, Suspense } from 'react'
-import { createBrowserRouter, Navigate, Outlet } from 'react-router-dom'
-import { AppLayout, LoadingSpinner } from '@/components'
-import { useAuthStore } from '@/stores'
+import { createBrowserRouter, Navigate } from 'react-router-dom'
+import { AppLayout } from '@/components'
+import {
+  LoginPage,
+  RegisterPage,
+  ForgotPasswordPage,
+  DashboardPage,
+  DeviceListPage,
+  CreateDevicePage,
+  DeviceDetailPage,
+  DeviceConfigPage,
+  TokenManagePage,
+  AlertRulesPage,
+  AlertEventsPage,
+  ProfilePage,
+  SecurityPage,
+} from './routeLazyImports'
+import { SuspenseWrapper } from './routeWrappers'
+import { ProtectedRoute, PublicRoute } from './routeGuards'
 
-// 使用动态导入实现代码分割
-const LoginPage = lazy(() => import('@/pages').then(m => ({ default: m.LoginPage })))
-const RegisterPage = lazy(() => import('@/pages').then(m => ({ default: m.RegisterPage })))
-const ForgotPasswordPage = lazy(() => import('@/pages').then(m => ({ default: m.ForgotPasswordPage })))
-const DashboardPage = lazy(() => import('@/pages').then(m => ({ default: m.DashboardPage })))
-const DeviceListPage = lazy(() => import('@/pages').then(m => ({ default: m.DeviceListPage })))
-const CreateDevicePage = lazy(() => import('@/pages').then(m => ({ default: m.CreateDevicePage })))
-const DeviceDetailPage = lazy(() => import('@/pages').then(m => ({ default: m.DeviceDetailPage })))
-const DeviceConfigPage = lazy(() => import('@/pages').then(m => ({ default: m.DeviceConfigPage })))
-const TokenManagePage = lazy(() => import('@/pages').then(m => ({ default: m.TokenManagePage })))
-const AlertRulesPage = lazy(() => import('@/pages').then(m => ({ default: m.AlertRulesPage })))
-const AlertEventsPage = lazy(() => import('@/pages').then(m => ({ default: m.AlertEventsPage })))
-const ProfilePage = lazy(() => import('@/pages').then(m => ({ default: m.ProfilePage })))
-const SecurityPage = lazy(() => import('@/pages').then(m => ({ default: m.SecurityPage })))
-
-// Suspense 包装组件
-const SuspenseWrapper: React.FC<{ children: React.ReactNode }> = ({ children }) => (
-  <Suspense fallback={<LoadingSpinner />}>{children}</Suspense>
-)
-
-// 需要认证的路由守卫
-const ProtectedRoute: React.FC = () => {
-  const { isAuthenticated } = useAuthStore()
-
-  if (!isAuthenticated) {
-    return <Navigate to="/login" replace />
-  }
-
-  return <Outlet />
-}
-
-// 未认证路由守卫（已登录则跳转首页）
-const PublicRoute: React.FC = () => {
-  const { isAuthenticated } = useAuthStore()
-
-  if (isAuthenticated) {
-    return <Navigate to="/" replace />
-  }
-
-  return <Outlet />
-}
-
+/**
+ * 应用路由配置
+ *
+ * 使用 React Router 7 的 createBrowserRouter 和代码分割
+ */
 export const router = createBrowserRouter([
   // 公开路由
   {

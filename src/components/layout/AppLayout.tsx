@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react'
+import React, { useState } from 'react'
 import { Layout, Drawer, Grid } from 'antd'
 import { Outlet } from 'react-router-dom'
 import { Header } from './Header'
@@ -11,18 +11,11 @@ const { useBreakpoint } = Grid
 export const AppLayout: React.FC = () => {
   const screens = useBreakpoint()
   const isMobile = !screens.md
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(isMobile)
   const [drawerVisible, setDrawerVisible] = useState(false)
 
   // 启用 Token 自动刷新
   useRefreshToken()
-
-  // 响应屏幕变化自动折叠侧边栏
-  useEffect(() => {
-    if (isMobile) {
-      setCollapsed(true)
-    }
-  }, [isMobile])
 
   const handleToggleSidebar = () => {
     if (isMobile) {

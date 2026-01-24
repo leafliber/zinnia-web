@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useCallback } from 'react'
 import {
   Table,
   Button,
@@ -25,7 +25,12 @@ import { useNavigate, useParams } from 'react-router-dom'
 import { devicesApi } from '@/api'
 import { CopyableKey, LoadingSpinner } from '@/components'
 import { formatDateTime, formatRelativeTime } from '@/utils'
-import type { DeviceToken, CreateDeviceTokenRequest, TokenPermission, Device } from '@/types'
+import {
+  TOKEN_MAX_EXPIRY_HOURS,
+  TOKEN_MAX_RATE_LIMIT,
+  TOKEN_MIN_RATE_LIMIT,
+} from '@/utils/constants'
+import type { DeviceToken, CreateDeviceTokenRequest, TokenPermission, Device, TokenTableRow } from '@/types'
 import type { ColumnsType } from 'antd/es/table'
 
 const { Title, Text } = Typography
@@ -47,39 +52,7 @@ export const TokenManagePage: React.FC = () => {
   const [includeRevoked, setIncludeRevoked] = useState(false)
   const [includeExpired] = useState(false)
 
-  useEffect(() => {
-    if (id) {
-      loadTokens()
-      loadDevice()
-    }
-  }, [id, includeRevoked, includeExpired])
-
-  const loadDevice = async () => {
-    if (!id) return
-    try {
-      const data = await devicesApi.getDevice(id)
-      setDevice(data)
-      setMainKey({ api_key_prefix: data.api_key_prefix })
-    } catch (error) {
-      // 忽略错误
-    }
-  }
-  const handleRotateMainKey = async () => {
-    if (!id) return
-    setRotating(true)
-    try {
-      const res = await devicesApi.rotateDeviceKey(id)
-      setMainKey({ api_key_prefix: res.api_key_prefix })
-      message.success('主 API Key 已轮换')
-      loadDevice()
-    } catch (error) {
-      message.error('轮换主 API Key 失败')
-    } finally {
-      setRotating(false)
-    }
-  }
-
-  const loadTokens = async () => {
+  const loadTokens = useCallback(async () => {
     if (!id) return
     setLoading(true)
     try {
@@ -88,10 +61,43 @@ export const TokenManagePage: React.FC = () => {
         include_expired: includeExpired,
       })
       setTokens(data)
-    } catch (error) {
+    } catch {
       message.error('加载令牌列表失败')
     } finally {
       setLoading(false)
+    }
+  }, [id, includeRevoked, includeExpired])
+
+  const loadDevice = useCallback(async () => {
+    if (!id) return
+    try {
+      const data = await devicesApi.getDevice(id)
+      setDevice(data)
+      setMainKey({ api_key_prefix: data.api_key_prefix })
+    } catch {
+      // 忽略错误
+    }
+  }, [id])
+
+  useEffect(() => {
+    if (id) {
+      loadTokens()
+      loadDevice()
+    }
+  }, [id, loadTokens, loadDevice])
+
+  const handleRotateMainKey = async () => {
+    if (!id) return
+    setRotating(true)
+    try {
+      const res = await devicesApi.rotateDeviceKey(id)
+      setMainKey({ api_key_prefix: res.api_key_prefix })
+      message.success('主 API Key 已轮换')
+      loadDevice()
+    } catch {
+      message.error('轮换主 API Key 失败')
+    } finally {
+      setRotating(false)
     }
   }
 
@@ -105,7 +111,7 @@ export const TokenManagePage: React.FC = () => {
       form.resetFields()
       loadTokens()
       message.success('令牌创建成功')
-    } catch (error) {
+    } catch {
       message.error('创建令牌失败')
     } finally {
       setCreating(false)
@@ -118,7 +124,7 @@ export const TokenManagePage: React.FC = () => {
       await devicesApi.revokeDeviceToken(id, tokenId)
       message.success('令牌已吊销')
       loadTokens()
-    } catch (error) {
+    } catch {
       message.error('吊销令牌失败')
     }
   }
@@ -130,7 +136,7 @@ export const TokenManagePage: React.FC = () => {
       const result = await devicesApi.revokeAllDeviceTokens(id)
       message.success(result.message)
       loadTokens()
-    } catch (error) {
+    } catch {
       message.error('吊销令牌失败')
     } finally {
       setRevokeAllLoading(false)
@@ -150,7 +156,7 @@ export const TokenManagePage: React.FC = () => {
   }
 
   // 主API Key虚拟行
-  const mainKeyRow = mainKey
+  const mainKeyRow: TokenTableRow[] = mainKey
     ? [{
         id: 'main-api-key',
         name: '主 API Key',
@@ -159,13 +165,12 @@ export const TokenManagePage: React.FC = () => {
         is_revoked: false,
         expires_at: null,
         last_used_at: null,
-        use_count: 0,
         created_at: device?.created_at || new Date().toISOString(),
         isMain: true,
       }]
     : []
 
-  const columns: ColumnsType<any> = [
+  const columns: ColumnsType<TokenTableRow> = [
     {
       title: '名称',
       dataIndex: 'name',
@@ -188,8 +193,8 @@ export const TokenManagePage: React.FC = () => {
     {
       title: '状态',
       key: 'status',
-      render: (_: unknown, record: any) => {
-        if (record.isMain) {
+      render: (_: unknown, record: TokenTableRow) => {
+        if ('isMain' in record && record.isMain) {
           return <Tag color="blue">主密钥</Tag>
         }
         if (record.is_revoked) {
@@ -205,7 +210,12 @@ export const TokenManagePage: React.FC = () => {
       title: '使用次数',
       dataIndex: 'use_count',
       key: 'use_count',
-      render: (count: number, record: any) => record.isMain ? '-' : count,
+      render: (_: unknown, record: TokenTableRow) => {
+        if ('isMain' in record && record.isMain) {
+          return '-'
+        }
+        return record.use_count
+      },
     },
     {
       title: '最后使用',
@@ -228,8 +238,8 @@ export const TokenManagePage: React.FC = () => {
     {
       title: '操作',
       key: 'action',
-      render: (_: unknown, record: any) => {
-        if (record.isMain) {
+      render: (_: unknown, record: TokenTableRow) => {
+        if ('isMain' in record && record.isMain) {
           return (
             <Button type="link" icon={<ReloadOutlined />} loading={rotating} onClick={handleRotateMainKey}>
               轮换
@@ -364,17 +374,17 @@ export const TokenManagePage: React.FC = () => {
           <Form.Item
             name="expires_in_hours"
             label="有效期（小时）"
-            extra="留空表示永久有效，最长 8760 小时（1年）"
+            extra={`留空表示永久有效，最长 ${TOKEN_MAX_EXPIRY_HOURS} 小时`}
           >
-            <InputNumber min={1} max={8760} style={{ width: '100%' }} placeholder="留空表示永久有效" />
+            <InputNumber min={1} max={TOKEN_MAX_EXPIRY_HOURS} style={{ width: '100%' }} placeholder="留空表示永久有效" />
           </Form.Item>
 
           <Form.Item
             name="rate_limit_per_minute"
             label="速率限制（次/分钟）"
-            extra="留空表示不限制，范围 1-1000"
+            extra={`留空表示不限制，范围 ${TOKEN_MIN_RATE_LIMIT}-${TOKEN_MAX_RATE_LIMIT}`}
           >
-            <InputNumber min={1} max={1000} style={{ width: '100%' }} placeholder="留空表示不限制" />
+            <InputNumber min={TOKEN_MIN_RATE_LIMIT} max={TOKEN_MAX_RATE_LIMIT} style={{ width: '100%' }} placeholder="留空表示不限制" />
           </Form.Item>
 
           <Form.Item>
